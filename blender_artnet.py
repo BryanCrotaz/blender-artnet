@@ -1,3 +1,7 @@
+"""
+This blender addon maps Art-Net DMX onto blender lights in real time. Use with Evee to live-preview your lighting.
+"""
+
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -16,18 +20,20 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy
-import types
 import socket
-import select
 import threading
 import math
 
-Universes = []  # float data 0-1
-RawUniverses = []  # byte data 0-255
-ArtNetSocket = None
+import bpy
 
-FixtureTypes = {
+Universes = []  # float data 0-1
+raw_universes = []  # byte data 0-255
+ART_NET_SOCKET = None
+UDP_IP = "0.0.0.0"
+UDP_PORT = 6454
+
+
+fixture_types = {
     "wash": {
         "power": 1000,
         "color": "rgbw",
@@ -61,12 +67,12 @@ FixtureTypes = {
         "power": 1000,
         "color": "wheel",
         "colorWheel": {
-            0: [1,1,1],
-            9: [1,0,0],
-            18: [0,0,1],
-            27: [0,1,1],
-            37: [0.2,1,0,2],
-            46: [1,0,1]
+            0: [1, 1, 1],
+            9: [1, 0, 0],
+            18: [0, 0, 1],
+            27: [0, 1, 1],
+            37: [0.2, 1, 0.2],
+            46: [1, 0, 1]
         },
         "pan": 0,
         "tilt": 2,
@@ -78,87 +84,87 @@ FixtureTypes = {
     }
 }
 
-FixtureUniverses = {
+fixture_universes = {
     2: {
         "Spot.027": {
-            "fixtureType": "wash",
-            "baseAddress": 147
+            "fixture_type": "wash",
+            "base_address": 147
         },
         "Spot.028": {
-            "fixtureType": "wash",
-            "baseAddress": 180
+            "fixture_type": "wash",
+            "base_address": 180
         },
      #   "Spot.012": {
-     #       "fixtureType": "wash",
-     #       "baseAddress": 181
+     #       "fixture_type": "wash",
+     #       "base_address": 181
      #   },
         "Spot.026": {
-            "fixtureType": "wash",
-            "baseAddress": 246
+            "fixture_type": "wash",
+            "base_address": 246
         },
      #   "Spot.012": {
-     #       "fixtureType": "wash",
-      #      "baseAddress": 181
+     #       "fixture_type": "wash",
+      #      "base_address": 181
      #   }
     },
     3: {
         "Spot.015": {
-            "fixtureType": "wash",
-            "baseAddress": 247
+            "fixture_type": "wash",
+            "base_address": 247
         },
         "Spot.014": {
-            "fixtureType": "wash",
-            "baseAddress": 214
+            "fixture_type": "wash",
+            "base_address": 214
         },
         "Spot.012": {
-            "fixtureType": "wash",
-            "baseAddress": 181
+            "fixture_type": "wash",
+            "base_address": 181
         },
         "Spot.016": {
-            "fixtureType": "wash",
-            "baseAddress": 148
+            "fixture_type": "wash",
+            "base_address": 148
         },
         "Spot.013": {
-            "fixtureType": "wash",
-            "baseAddress": 115
+            "fixture_type": "wash",
+            "base_address": 115
         },
         "Spot.017": {
-            "fixtureType": "wash",
-            "baseAddress": 82
+            "fixture_type": "wash",
+            "base_address": 82
         },
         "Spot.018": {
-            "fixtureType": "wash",
-            "baseAddress": 49
+            "fixture_type": "wash",
+            "base_address": 49
         }
     },
     4: {
         "Spot.020": {
-            "fixtureType": "wash",
-            "baseAddress": 247
+            "fixture_type": "wash",
+            "base_address": 247
         },
         "Spot.019": {
-            "fixtureType": "wash",
-            "baseAddress": 214
+            "fixture_type": "wash",
+            "base_address": 214
         },
         "Spot.021": {
-            "fixtureType": "wash",
-            "baseAddress": 181
+            "fixture_type": "wash",
+            "base_address": 181
         },
         "Spot.022": {
-            "fixtureType": "wash",
-            "baseAddress": 148
+            "fixture_type": "wash",
+            "base_address": 148
         },
         "Spot.023": {
-            "fixtureType": "wash",
-            "baseAddress": 115
+            "fixture_type": "wash",
+            "base_address": 115
         },
         "Spot.024": {
-            "fixtureType": "wash",
-            "baseAddress": 82
+            "fixture_type": "wash",
+            "base_address": 82
         },
         "Spot.025": {
-            "fixtureType": "wash",
-            "baseAddress": 49
+            "fixture_type": "wash",
+            "base_address": 49
         }
     }
 }
@@ -166,195 +172,194 @@ FixtureUniverses = {
 UniverseUpdatesPending = {} # map of universe indices : bool
 UniverseUpdatesLock = threading.Lock()
 
-def getUniverse(index):
-    while (len(Universes) <= index):
+def get_universe(index):
+    while len(Universes) <= index:
         universe = []
         for _ in range(512):
             universe.append(0)
         Universes.append(universe)
-        rawUniverse = []
+        raw_universe = []
         for _ in range(512):
-            rawUniverse.append(0)
-        RawUniverses.append(rawUniverse)
-    return Universes[index]   
-    
+            raw_universe.append(0)
+        raw_universes.append(raw_universe)
+    return Universes[index]
+
 def init():
     setup()
-    ArtNetSocket = connect()
-    if (ArtNetSocket != None):
-        thread = threading.Thread(target=socketLoop, args=(ArtNetSocket,))
+    global ART_NET_SOCKET
+    ART_NET_SOCKET = connect()
+    if ART_NET_SOCKET is not None:
+        thread = threading.Thread(target=socketLoop, args=(ART_NET_SOCKET,))
         thread.start()
     bpy.app.timers.register(updateBlender, first_interval=0.1, persistent=True)
 
 def connect():
     try:
-        UDP_IP = "0.0.0.0"
-        UDP_PORT = 6454
-
-        artNetSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        artNetSocket.bind((UDP_IP, UDP_PORT))
-        artNetSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        global ART_NET_SOCKET
+        ART_NET_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        ART_NET_SOCKET.bind((UDP_IP, UDP_PORT))
+        ART_NET_SOCKET.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # blocking socket as we're listening in a background thread
-        artNetSocket.setblocking(1)
-        return artNetSocket
+        ART_NET_SOCKET.setblocking(1)
+        return ART_NET_SOCKET
     except Exception as err:
         print("error while connecting", err)
-        disconnect(artNetSocket)
+        disconnect(ART_NET_SOCKET)
         return None
 
-def disconnect(artNetSocket):
-    if (artNetSocket is not None):
-        artNetSocket.close()
-    ArtNetSocket = None
+def disconnect(a_socket):
+    if a_socket is not None:
+        a_socket.close()
+    global ART_NET_SOCKET
+    ART_NET_SOCKET = None
 
 def isArtNet(packet):
-    return (packet[0] == 65 
-            and packet[1] == 114 
+    return (packet[0] == 65
+            and packet[1] == 114
             and packet[2] == 116
             and packet[8] == 0
             and packet[9] == 80) # known header
 
 def rgbwToRgb(red, green, blue, white):
-    w = white
-    r = (red + w/3) * 3 / 4
-    g = (green + w/3) * 3 / 4
-    b = (blue + w/3) * 3 / 4
-    return [r,g,b]    
+    r = (red + white/3) * 3 / 4
+    g = (green + white/3) * 3 / 4
+    b = (blue + white/3) * 3 / 4
+    return [r, g, b]    
 
 def cmyToRgb(cyan, magenta, yellow):
     r = 1-cyan
     g = 1-magenta
     b = 1-yellow
-    return [r,g,b]    
+    return [r, g, b]    
 
 def setup():
     # grab the objects to be mapped to data
     objects = bpy.context.scene.objects
-    for universe in FixtureUniverses:
-        u = FixtureUniverses[universe]
+    for universe in fixture_universes:
+        u = fixture_universes[universe]
         for name in u:
             # grab the blender named object so we don't need to do this every frame
             obj = objects[name]
             u[name]["object"] = obj
             # base address is 1-based so subtract 1 from it
-            u[name]["baseAddress"] -= 1
+            u[name]["base_address"] -= 1
             obj.rotation_mode = "XYZ"
-    for fixtureType in FixtureTypes:
-        ft = FixtureTypes[fixtureType]
+    for fixture_type in fixture_types:
+        ft = fixture_types[fixture_type]
         # convert degrees to radians so we don't do this every frame
         ft["panRange"] = math.radians(ft["panRange"])
         ft["tiltRange"] = math.radians(ft["tiltRange"])
-    
+
 def socketLoop(artNetSocket):
     # runs in a background thread
     # must not access blender directly
-    socket = artNetSocket
+    thread_socket = artNetSocket
 #    for t in range(10):
     while True:
         try:
             # read the packet
-            packet, _addr = socket.recvfrom(1024) 
-            if (len(packet) > 18 and isArtNet(packet)):
+            packet, _addr = thread_socket.recvfrom(1024)
+            if len(packet) > 18 and isArtNet(packet):
                 # packet received describing a universe
                 channels = packet[16]*256 + packet[17]
                 # packets don't have to have all 512 channels
-                if (channels <= 512):
-                    universeIndex = packet[15]*256 + packet[14]   
+                if channels <= 512:
+                    universe_index = packet[15]*256 + packet[14]   
                     # universe has float data 0-1
-                    universe = getUniverse(universeIndex)
-                    # rawUniverse has byte data to detect changes
-                    rawUniverse = RawUniverses[universeIndex]
-                    universeChanged = False
+                    universe = get_universe(universe_index)
+                    # raw_universe has byte data to detect changes
+                    raw_universe = raw_universes[universe_index]
+                    universe_changed = False
                     # loop through the channels
                     for i in range(channels):
-                        rawValue = packet[i+18]
-                        if (rawUniverse[i] != rawValue):
+                        raw_value = packet[i+18]
+                        if raw_universe[i] != raw_value:
                             # data changed since last time
-                            rawUniverse[i] = rawValue    
-                            universe[i] = rawValue / 255.0
-                            universeChanged = True
+                            raw_universe[i] = raw_value
+                            universe[i] = raw_value / 255.0
+                            universe_changed = True
                         i += 1 # ++ operator doesn't exist in python
                     # let the main thread know that there's an update
-                    if (universeChanged):
+                    if universe_changed:
                         with UniverseUpdatesLock:
-                            UniverseUpdatesPending[universeIndex] = True                        
+                            UniverseUpdatesPending[universe_index] = True
         except Exception as err:
             print("error in main loop", err)
             # reconnect socket
-            disconnect(socket)
-            socket = connect()
+            disconnect(thread_socket)
+            thread_socket = connect()
 
 def updateBlender():
     # runs in the main thread on a timer
-    universesPending = []
+    universes_pending = []
     # find out which universes updated
     with UniverseUpdatesLock:
-        for universeIndex in UniverseUpdatesPending:
-            if (UniverseUpdatesPending[universeIndex]):
+        for universe_index in UniverseUpdatesPending:
+            if UniverseUpdatesPending[universe_index]:
                 # only list universes that we have fixtures for
-                if (universeIndex in FixtureUniverses):
-                    universesPending.append(universeIndex)
-                UniverseUpdatesPending[universeIndex] = False
-    
-    for universeIndex in universesPending:
-        fixtureUniverse = FixtureUniverses[universeIndex]
-        universe = getUniverse(universeIndex-1)
+                if universe_index in fixture_universes:
+                    universes_pending.append(universe_index)
+                UniverseUpdatesPending[universe_index] = False
+
+    for universe_index in universes_pending:
+        fixture_universe = fixture_universes[universe_index]
+        universe = get_universe(universe_index-1)
         # push the data to blender objects
-        for objName in fixtureUniverse:
-            mapping = fixtureUniverse[objName]
+        for obj_name in fixture_universe:
+            mapping = fixture_universe[obj_name]
             obj = mapping["object"]
-            fixtureType = FixtureTypes[mapping["fixtureType"]]
-            baseAddress = mapping["baseAddress"]                        
+            fixture_type = fixture_types[mapping["fixture_type"]]
+            base_address = mapping["base_address"]                        
             # push the data
-            obj.data.color = getColor(universe, baseAddress, fixtureType)
-            obj.rotation_euler = getRotation(universe, baseAddress, fixtureType)
-            obj.data.spot_size = getZoom(universe, baseAddress, fixtureType)
+            obj.data.color = getColor(universe, base_address, fixture_type)
+            obj.rotation_euler = getRotation(universe, base_address, fixture_type)
+            obj.data.spot_size = getZoom(universe, base_address, fixture_type)
     return 0.03 # call again in 0.05 seconds - 30fps
 
-def getZoom(universe, baseAddress, fixtureType):
-    zoom = universe[baseAddress + fixtureType["zoom"]]
-    min = fixtureType["minZoom"]
-    max = fixtureType["maxZoom"]
-    angle = min + zoom *(max-min)
+def getZoom(universe, base_address, fixture_type):
+    zoom = universe[base_address + fixture_type["zoom"]]
+    min_zoom = fixture_type["minZoom"]
+    max_zoom = fixture_type["maxZoom"]
+    angle = min + zoom *(max_zoom-min_zoom)
     return math.radians(angle)
 
-def getRotation(universe, baseAddress, fixtureType):
-    pan = universe[baseAddress + fixtureType["pan"]]
-    tilt = universe[baseAddress + fixtureType["tilt"]]    
-    panRange = fixtureType["panRange"]
-    tiltRange = fixtureType["tiltRange"]
+def getRotation(universe, base_address, fixture_type):
+    pan = universe[base_address + fixture_type["pan"]]
+    tilt = universe[base_address + fixture_type["tilt"]]    
+    pan_range = fixture_type["panRange"]
+    tilt_range = fixture_type["tiltRange"]
     pan -= 0.5
     tilt -= 0.5
-    pan *= panRange
-    tilt *= tiltRange
+    pan *= pan_range
+    tilt *= tilt_range
     return [0, tilt, pan]
 
-def getColor(universe, baseAddress, fixtureType):
-    colorModel = fixtureType["color"]
-    if (colorModel == "rgbw"):
-        r = universe[baseAddress + fixtureType["red"]]
-        g = universe[baseAddress + fixtureType["green"]]
-        b = universe[baseAddress + fixtureType["blue"]]
-        w = universe[baseAddress + fixtureType["white"]]
-        return rgbwToRgb(r,g,b,w)
-    elif (colorModel == "cmy"):
-        c = universe[baseAddress + fixtureType["cyan"]]
-        m = universe[baseAddress + fixtureType["magenta"]]
-        y = universe[baseAddress + fixtureType["yellow"]]
-        return cmyToRgb(c,m,y)
-    
+def getColor(universe, base_address, fixture_type):
+    color_model = fixture_type["color"]
+    if color_model == "rgbw":
+        r = universe[base_address + fixture_type["red"]]
+        g = universe[base_address + fixture_type["green"]]
+        b = universe[base_address + fixture_type["blue"]]
+        w = universe[base_address + fixture_type["white"]]
+        return rgbwToRgb(r, g, b, w)
+    elif color_model == "cmy":
+        c = universe[base_address + fixture_type["cyan"]]
+        m = universe[base_address + fixture_type["magenta"]]
+        y = universe[base_address + fixture_type["yellow"]]
+        return cmyToRgb(c, m, y)
+
 def register():
     init()
 
 def unregister():
-    disconnect(ArtNetSocket)
+    disconnect(ART_NET_SOCKET)
 
 bl_info = {
     "name": "ArtNet Lighting Controller",
     "description": "Combine with Evee to get a real "
-                    "time lighting visualizer, controlled "
-                    "by any Artnet lighting desk. QLCPlus "
-                    "is an example of an open source desk",
+                   "time lighting visualizer, controlled "
+                   "by any Artnet lighting desk. QLCPlus "
+                   "is an example of an open source desk",
     "blender": (2, 80, 0),
     "category": "Lighting",
     "support": "COMMUNITY",

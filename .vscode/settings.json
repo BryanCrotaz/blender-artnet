@@ -6,5 +6,5 @@
       "--init-hook",
       "import sys; sys.path.append('C:\\projects\\blender_autocomplete\\2.81a')"
   ],
-  "python.pythonPath": "C:\\Users\\Einstein\\AppData\\Local\\Programs\\Python\\Python38\\python.exe"
+  "python.pythonPath": "C:\\Program Files\\Python38\\python.exe"
 }
