@@ -1,0 +1,10 @@
+{
+  "python.autoComplete.extraPaths": [
+    "C:\\projects\\blender_autocomplete\\2.81a"
+  ],
+  "python.linting.pylintArgs": [
+      "--init-hook",
+      "import sys; sys.path.append('C:\\projects\\blender_autocomplete\\2.81a')"
+  ],
+  "python.pythonPath": "C:\\Users\\Einstein\\AppData\\Local\\Programs\\Python\\Python38\\python.exe"
+}

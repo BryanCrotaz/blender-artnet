@@ -25,6 +25,7 @@ import math
 
 Universes = []  # float data 0-1
 RawUniverses = []  # byte data 0-255
+ArtNetSocket = None
 
 FixtureTypes = {
     "wash": {
@@ -168,12 +169,12 @@ UniverseUpdatesLock = threading.Lock()
 def getUniverse(index):
     while (len(Universes) <= index):
         universe = []
-        for i in range(512):
-            universe.append(0);
+        for _ in range(512):
+            universe.append(0)
         Universes.append(universe)
         rawUniverse = []
-        for i in range(512):
-            rawUniverse.append(0);
+        for _ in range(512):
+            rawUniverse.append(0)
         RawUniverses.append(rawUniverse)
     return Universes[index]   
     
@@ -181,7 +182,7 @@ def init():
     setup()
     ArtNetSocket = connect()
     if (ArtNetSocket != None):
-        thread = threading.Thread(target=socketLoop, args=(ArtNetSocket,), daemon=True)
+        thread = threading.Thread(target=socketLoop, args=(ArtNetSocket,))
         thread.start()
     bpy.app.timers.register(updateBlender, first_interval=0.1, persistent=True)
 
@@ -202,7 +203,9 @@ def connect():
         return None
 
 def disconnect(artNetSocket):
-    artNetSocket.close()
+    if (artNetSocket is not None):
+        artNetSocket.close()
+    ArtNetSocket = None
 
 def isArtNet(packet):
     return (packet[0] == 65 
@@ -226,7 +229,7 @@ def cmyToRgb(cyan, magenta, yellow):
 
 def setup():
     # grab the objects to be mapped to data
-    objects = bpy.context.scene.objects;
+    objects = bpy.context.scene.objects
     for universe in FixtureUniverses:
         u = FixtureUniverses[universe]
         for name in u:
@@ -250,7 +253,7 @@ def socketLoop(artNetSocket):
     while True:
         try:
             # read the packet
-            packet, addr = socket.recvfrom(1024) 
+            packet, _addr = socket.recvfrom(1024) 
             if (len(packet) > 18 and isArtNet(packet)):
                 # packet received describing a universe
                 channels = packet[16]*256 + packet[17]
@@ -258,7 +261,7 @@ def socketLoop(artNetSocket):
                 if (channels <= 512):
                     universeIndex = packet[15]*256 + packet[14]   
                     # universe has float data 0-1
-                    universe = getUniverse(universeIndex);
+                    universe = getUniverse(universeIndex)
                     # rawUniverse has byte data to detect changes
                     rawUniverse = RawUniverses[universeIndex]
                     universeChanged = False
@@ -344,9 +347,18 @@ def register():
     init()
 
 def unregister():
-    disconnect()
+    disconnect(ArtNetSocket)
 
-if __name__ == "__main__":
-    register()
-    
-    
+bl_info = {
+    "name": "ArtNet Lighting Controller",
+    "description": "Combine with Evee to get a real "
+                    "time lighting visualizer, controlled "
+                    "by any Artnet lighting desk. QLCPlus "
+                    "is an example of an open source desk",
+    "blender": (2, 80, 0),
+    "category": "Lighting",
+    "support": "COMMUNITY",
+    "author": "Bryan Crotaz",
+    "version": (0, 1),
+    "wiki_url": "https://github.com/BryanCrotaz/blender-artnet"
+}
