@@ -19,6 +19,8 @@ Clone this repo and remember the folder where you put it
 
 # Usage
 
+Turn on Viewport Shading and Evee rendering
+
 Select a light in your scene and enable ArtNet Light Control in the properties. Assign a universe, base 
 address and fixture type
 
