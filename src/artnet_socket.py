@@ -9,12 +9,16 @@ UDP_PORT = 6454
 class ArtNetSocket:
     """Connects to ArtNet"""
 
+    _shutdown = False
+    _thread: threading.Thread
+
     def __init__(self, universe_store):
         self._socket = self.connect()
         self.universe_store = universe_store
         if self._socket is not None:
-            thread = threading.Thread(target=self.socket_loop)
-            thread.start()
+            self._thread = threading.Thread(target=self.socket_loop)
+            self._thread.daemon = True
+            self._thread.start()
 
     def connect(self):
         """Connect to Artnet UDP socket"""
@@ -24,6 +28,7 @@ class ArtNetSocket:
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # blocking socket as we're listening in a background thread
             self._socket.setblocking(1)
+            self._socket.settimeout(1) # 1 second timeout
             return self._socket
         except Exception as err:
             print("error while connecting", err)
@@ -35,6 +40,11 @@ class ArtNetSocket:
         if self._socket is not None:
             self._socket.close()
         self._socket = None
+
+    def shutdown(self):
+        """Kill the internal thread and wait for it to exit"""
+        self._shutdown = True
+        self._thread.join()
 
     @staticmethod
     def is_art_net(packet):
@@ -49,18 +59,24 @@ class ArtNetSocket:
         """Thread loop"""
         # runs in a background thread
         # must not access blender directly
-    #    for t in range(10):
         while True:
             try:
                 # read the packet
                 packet, _addr = self._socket.recvfrom(1024)
                 if len(packet) > 18 and ArtNetSocket.is_art_net(packet):
                     self.parse_packet(packet)
-            except Exception as err:
-                print("error in main loop", err)
+            except socket.timeout:
+                # do nothing
+                pass
+            except socket.error:
                 # reconnect socket
                 self.disconnect()
                 self._socket = self.connect()
+            except Exception:
+                pass
+            if self._shutdown:
+                return
+
 
     def parse_packet(self, packet):
         """Parse a valid artnet universe packet"""

@@ -19,17 +19,17 @@ class FixtureTypeStore:
         "wash": {
             "power": 1000,
             "color": "rgbw",
-            "red": 8,
-            "green": 10,
-            "blue": 12,
-            "white": 14,
+            "red": 4,
+            "green": 6,
+            "blue": 8,
+            "white": 10,
             "pan": 0,
             "tilt": 2,
-            "zoom": 20,
-            "panRange": 540,
-            "tiltRange": 270,
-            "minZoom": 12,
-            "maxZoom": 49
+            "zoom": 15,
+            "panRange": 623,
+            "tiltRange": 295,
+            "minZoom": 7,
+            "maxZoom": 50
         },
         "spot": {
             "power": 1000,
@@ -68,4 +68,6 @@ class FixtureTypeStore:
 
     def get_fixture_type(self, name):
         """Return a named fixture type"""
-        return self._fixture_types[name]
+        if name in self._fixture_types:
+            return self._fixture_types[name]
+        return None

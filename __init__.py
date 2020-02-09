@@ -26,7 +26,7 @@ from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, IntProperty, StringProperty
 
 from .src.artnet_socket import ArtNetSocket
-from .src.universe_store import UniverseStore
+from .src.universe_store import UniverseStore, ALL_UNIVERSES
 from .src.fixture_store import FixtureStore
 from .src.fixture_type_store import FixtureTypeStore
 from .src.blender_sync import BlenderSynchroniser
@@ -56,21 +56,27 @@ bl_info = {
 
 def _setup():
     # can't get at scene in initialization so run from a timer
-    GLOBAL_DATA["FixtureStore"] = FixtureStore()
+    fixture_store = FixtureStore()
+    GLOBAL_DATA["FixtureStore"] = fixture_store
     fixture_types = FixtureTypeStore()
     GLOBAL_DATA["UniverseStore"] = UniverseStore()
     universes = GLOBAL_DATA["UniverseStore"]
     GLOBAL_DATA["ArtNetSocket"] = ArtNetSocket(universes)
     GLOBAL_DATA["BlenderSynchroniser"] = BlenderSynchroniser(
         universes,
-        GLOBAL_DATA["FixtureStore"],
+        fixture_store,
         fixture_types
     )
+    fixture_store.load_objects_from_scene()
+    universes.notify_universe_change(ALL_UNIVERSES)
     return None
 
 @persistent
-def _load_objects_from_scene(_, __):
-    GLOBAL_DATA["FixtureStore"].load_objects_from_scene()
+def _on_file_loaded(_, __):
+    if "FixtureStore" in GLOBAL_DATA:
+        GLOBAL_DATA["FixtureStore"].load_objects_from_scene()
+        universes = GLOBAL_DATA["UniverseStore"]
+        universes.notify_universe_change(ALL_UNIVERSES)
 
 def register():
     """Called from Blender"""
@@ -78,7 +84,7 @@ def register():
     GLOBAL_DATA["BlenderSynchroniser"] = None
     bpy.app.timers.register(_setup, first_interval=0.1)
     # load objects when file is loaded
-    bpy.app.handlers.load_post.append(_load_objects_from_scene)
+    bpy.app.handlers.load_post.append(_on_file_loaded)
     # add light properties
     bpy.types.Light.artnet_enabled = BoolProperty(
         name="artnet_enabled",

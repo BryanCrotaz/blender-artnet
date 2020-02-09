@@ -2,6 +2,8 @@
 
 import threading
 
+ALL_UNIVERSES = -1
+
 class UniverseStore:
     """Stores universe data with thread locking"""
 
@@ -24,7 +26,11 @@ class UniverseStore:
     def notify_universe_change(self, index):
         """Threadsafe notify that a universe is dirty"""
         with self.UpdatesLock:
-            self.UpdatesPending[index] = True
+            if index == ALL_UNIVERSES:
+                for i in range(len(self._universes)):
+                    self.UpdatesPending[i] = True
+            else:
+                self.UpdatesPending[index] = True
 
     def get_pending_universes(self):
         """Returns a list of universes that need to be synced to Blender"""

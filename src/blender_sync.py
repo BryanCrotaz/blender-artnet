@@ -38,11 +38,12 @@ class BlenderSynchroniser:
             obj = mapping["object"]
             if obj is not None:
                 fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
-                base_address = mapping["base_address"]
-                # push the data
-                obj.data.color = self._get_color(universe, base_address, fixture_type)
-                obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type)
-                obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type)
+                if fixture_type is not None:
+                    base_address = mapping["base_address"]
+                    # push the data
+                    obj.data.color = self._get_color(universe, base_address, fixture_type)
+                    obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type)
+                    obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type)
 
     def _get_zoom(self, universe, base_address, fixture_type):
         zoom = universe[base_address + fixture_type["zoom"]]
