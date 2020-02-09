@@ -32,6 +32,7 @@ class BlenderSynchroniser:
     def _update_blender_from_universe(self, index):
         fixtures = self.fixture_store.get_universe_fixtures(index)
         universe = self.universe_store.get_universe(index)
+        rawUniverse = self.universe_store.get_raw_universe(index)
         # push the data to blender objects
         for obj_name in fixtures:
             mapping = fixtures[obj_name]
@@ -41,7 +42,8 @@ class BlenderSynchroniser:
                 if fixture_type is not None:
                     base_address = mapping["base_address"]
                     # push the data
-                    obj.data.color = self._get_color(universe, base_address, fixture_type) or [0, 0, 0]
+                    obj.data.color = self._get_color(universe, rawUniverse, base_address, fixture_type) or [0, 0, 0]
+                    obj.data.energy = self._get_power(universe, base_address, fixture_type)
                     obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
                     obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
 
@@ -57,6 +59,15 @@ class BlenderSynchroniser:
         except IndexError:
             return min_zoom # because no data yet
 
+    def _get_power(self, universe, base_address, fixture_type):
+        try:
+            dimmer = universe[base_address + fixture_type["dimmer"]]
+            lumens = fixture_type["lumens"]
+            power = lumens * dimmer / 6.83
+            return power
+        except IndexError:
+            return 1000 # because no data yet
+
     def _get_rotation(self, universe, base_address, fixture_type):
         try:
             pan = universe[base_address + fixture_type["pan"]]
@@ -71,19 +82,25 @@ class BlenderSynchroniser:
         except IndexError:
             return [0, 0, 0] # null movement, because no data yet
 
-    def _get_color(self, universe, base_address, fixture_type):
-        color_model = fixture_type["color"]
+    def _get_color(self, universe, rawUniverse, base_address, fixture_type):
+        color_mode = fixture_type["colorMode"]
         try:
-            if color_model == "rgbw":
+            if color_mode == "rgbw":
                 red = universe[base_address + fixture_type["red"]]
                 green = universe[base_address + fixture_type["green"]]
                 blue = universe[base_address + fixture_type["blue"]]
                 white = universe[base_address + fixture_type["white"]]
                 return ColorConverter.rgbw_to_rgb(red, green, blue, white)
-            elif color_model == "cmy":
+            elif color_mode == "cmy":
                 cyan = universe[base_address + fixture_type["cyan"]]
                 magenta = universe[base_address + fixture_type["magenta"]]
                 yellow = universe[base_address + fixture_type["yellow"]]
                 return ColorConverter.cmy_to_rgb(cyan, magenta, yellow)
+            elif color_mode == "wheel":
+                position = rawUniverse[base_address + fixture_type["color"]]
+                wheel = fixture_type["colorWheel"]
+                return ColorConverter.wheel_to_rgb(wheel, position, True)
+            else:
+                return [1, 1, 1] # white
         except IndexError:
             return [0, 0, 0] # black, because no data yet

@@ -1,4 +1,7 @@
 """Color Converter"""
+
+import math
+
 class ColorConverter:
     """Converts color formats to rgb"""
 
@@ -19,3 +22,18 @@ class ColorConverter:
             1-magenta,
             1-yellow
         ]
+
+    @staticmethod
+    def wheel_to_rgb(wheel_settings, position, continuous):
+        """Convert Color Wheel to RGB"""
+        # todo: handle continuous wheels
+        positions = wheel_settings.keys()
+        last = max(positions)
+        previous = last
+        for pos in positions:
+            if position <= pos:
+                print(position, pos, wheel_settings[pos])
+                ## we're between this one and the previous one
+                return wheel_settings[pos]
+            previous = position
+        return wheel_settings[last]

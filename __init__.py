@@ -109,6 +109,7 @@ def unregister():
     """Called from Blender"""
     if GLOBAL_DATA["ArtNetSocket"] is not None:
         GLOBAL_DATA["ArtNetSocket"].disconnect()
+        GLOBAL_DATA["ArtNetSocket"].shutdown()
     if bpy.app.timers.is_registered(_setup):
         bpy.app.timers.unregister(_setup)
     # unregister ui panel

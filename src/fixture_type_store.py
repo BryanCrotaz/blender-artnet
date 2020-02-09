@@ -17,8 +17,7 @@ class FixtureTypeStore:
     # TODO: load these from a public store or provide a UI to edit them
     _fixture_types = {
         "wash": {
-            "power": 1000,
-            "color": "rgbw",
+            "colorMode": "rgbw",
             "red": 4,
             "green": 6,
             "blue": 8,
@@ -26,29 +25,30 @@ class FixtureTypeStore:
             "pan": 0,
             "tilt": 2,
             "zoom": 15,
-            "zoom_invert": False,
+            "dimmer": 13,
             "panRange": 623,
             "tiltRange": 295,
             "minZoom": 7,
-            "maxZoom": 50
+            "maxZoom": 50,
+            "lumens": 5085
         },
         "spot": {
-            "power": 1000,
-            "color": "cmy",
+            "colorMode": "cmy",
             "cyan": 8,
             "magenta": 9,
             "yellow": 10,
             "pan": 0,
             "tilt": 2,
-            "zoom": 21,
+            "zoom": 24,
+            "dimmer": 30,
             "panRange": 540,
             "tiltRange": 270,
             "minZoom": 10,
-            "maxZoom": 45
+            "maxZoom": 45,
+            "lumens": 41000
         },
         "pointe": {
-            "power": 1000,
-            "color": "wheel",
+            "colorMode": "wheel",
             "colorWheel": {
                 0: [1, 1, 1],
                 9: [1, 0, 0],
@@ -57,13 +57,16 @@ class FixtureTypeStore:
                 37: [0.2, 1, 0.2],
                 46: [1, 0, 1]
             },
+            "color": 6,
             "pan": 0,
             "tilt": 2,
-            "zoom": 16,
+            "zoom": 15,
+            "dimmer": 21,
             "panRange": 540,
             "tiltRange": 270,
             "minZoom": 5,
-            "maxZoom": 20
+            "maxZoom": 20,
+            "lumens": 5150
         }
     }
 
