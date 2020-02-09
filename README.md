@@ -26,6 +26,8 @@ address and fixture type
 
 Add your own named fixture types in `src/fixture_type_store.py`
 
+!(images/Blender-artnet.png)
+
 # Contributions wanted
 * Let's work out how to get fixture definitions in from an open source store
 * Work out how to map light lux levels to Blender light power
