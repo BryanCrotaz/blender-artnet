@@ -33,7 +33,7 @@ from .src.blender_sync import BlenderSynchroniser
 
 from .src.ui.light_panel import LightArtNetPanel
 
-global_data = {
+GLOBAL_DATA = {
     ArtNetSocket: ArtNetSocket,
     BlenderSynchroniser: BlenderSynchroniser,
     FixtureStore: FixtureStore
@@ -50,42 +50,59 @@ bl_info = {
     "category": "Lighting",
     "support": "COMMUNITY",
     "author": "Bryan Crotaz",
-    "version": (1,0),
+    "version": (1, 0),
     "wiki_url": "https://github.com/BryanCrotaz/blender-artnet"
 }
 
 def _setup():
     # can't get at scene in initialization so run from a timer
-    global_data["FixtureStore"] = FixtureStore()
+    GLOBAL_DATA["FixtureStore"] = FixtureStore()
     fixture_types = FixtureTypeStore()
-    universes = UniverseStore()
-    global_data["ArtNetSocket"] = ArtNetSocket(universes)
-    global_data["BlenderSynchroniser"] = BlenderSynchroniser(universes, global_data["FixtureStore"], fixture_types)
+    GLOBAL_DATA["UniverseStore"] = UniverseStore()
+    universes = GLOBAL_DATA["UniverseStore"]
+    GLOBAL_DATA["ArtNetSocket"] = ArtNetSocket(universes)
+    GLOBAL_DATA["BlenderSynchroniser"] = BlenderSynchroniser(
+        universes,
+        GLOBAL_DATA["FixtureStore"],
+        fixture_types
+    )
     return None
 
 @persistent
 def _load_objects_from_scene(_, __):
-    global_data["FixtureStore"].load_objects_from_scene()
+    GLOBAL_DATA["FixtureStore"].load_objects_from_scene()
 
 def register():
     """Called from Blender"""
-    global_data["ArtNetSocket"] = None
-    global_data["BlenderSynchroniser"] = None
+    GLOBAL_DATA["ArtNetSocket"] = None
+    GLOBAL_DATA["BlenderSynchroniser"] = None
     bpy.app.timers.register(_setup, first_interval=0.1)
     # load objects when file is loaded
     bpy.app.handlers.load_post.append(_load_objects_from_scene)
     # add light properties
-    bpy.types.Light.artnet_enabled = BoolProperty(name="artnet_enabled")
-    bpy.types.Light.artnet_fixture_type = StringProperty(name="artnet_fixture_type")
-    bpy.types.Light.artnet_universe = IntProperty(name="artnet_universe")
-    bpy.types.Light.artnet_base_address = IntProperty(name="artnet_base_address")
+    bpy.types.Light.artnet_enabled = BoolProperty(
+        name="artnet_enabled",
+        update=_light_data_change
+    )
+    bpy.types.Light.artnet_universe = IntProperty(
+        name="artnet_universe",
+        update=_light_data_change
+    )
+    bpy.types.Light.artnet_fixture_type = StringProperty(
+        name="artnet_fixture_type",
+        update=_light_data_change
+    )
+    bpy.types.Light.artnet_base_address = IntProperty(
+        name="artnet_base_address",
+        update=_light_data_change
+    )
     # register UI Panel
     bpy.utils.register_class(LightArtNetPanel)
 
 def unregister():
     """Called from Blender"""
-    if global_data["ArtNetSocket"] is not None:
-        global_data["ArtNetSocket"].disconnect()
+    if GLOBAL_DATA["ArtNetSocket"] is not None:
+        GLOBAL_DATA["ArtNetSocket"].disconnect()
     if bpy.app.timers.is_registered(_setup):
         bpy.app.timers.unregister(_setup)
     # unregister ui panel
@@ -96,3 +113,14 @@ def unregister():
     del bpy.types.Light.artnet_universe
     del bpy.types.Light.artnet_base_address
 
+def _light_data_change(data, context):
+    """One of the lights changed in the scene - update our internal data"""
+    fixtures = GLOBAL_DATA["FixtureStore"]
+    old_universe = fixtures.get_universe(context.object)
+    fixtures.update_object(context.object)
+    # apply the DMX data to get it up to date
+    universes = GLOBAL_DATA["UniverseStore"]
+    if old_universe is not None:
+        universes.notify_universe_change(old_universe)
+    if data.artnet_enabled:
+        universes.notify_universe_change(data.artnet_universe)

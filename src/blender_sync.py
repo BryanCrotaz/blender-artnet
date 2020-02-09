@@ -1,7 +1,5 @@
 """Write universe data to blender"""
 
-import math
-
 import bpy
 
 from .color_converter import ColorConverter
@@ -23,18 +21,20 @@ class BlenderSynchroniser:
         universes_pending = self.universe_store.get_pending_universes()
 
         # only deal with universes that we have fixtures for
-        universes_pending = list(filter(lambda x: x in self.fixture_store.fixture_universe_ids, universes_pending))
+        universes_pending = list(
+            filter(lambda x: x in self.fixture_store.fixture_universe_ids, universes_pending)
+        )
 
         for universe_index in universes_pending:
             self._update_blender_from_universe(universe_index)
         return 0.03 # call again in 0.05 seconds - 30fps
 
     def _update_blender_from_universe(self, index):
-        fixture_universe = self.fixture_store.get_fixture_universe(index)
+        fixtures = self.fixture_store.get_universe_fixtures(index)
         universe = self.universe_store.get_universe(index)
         # push the data to blender objects
-        for obj_name in fixture_universe:
-            mapping = fixture_universe[obj_name]
+        for obj_name in fixtures:
+            mapping = fixtures[obj_name]
             obj = mapping["object"]
             if obj is not None:
                 fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
@@ -53,7 +53,7 @@ class BlenderSynchroniser:
 
     def _get_rotation(self, universe, base_address, fixture_type):
         pan = universe[base_address + fixture_type["pan"]]
-        tilt = universe[base_address + fixture_type["tilt"]]    
+        tilt = universe[base_address + fixture_type["tilt"]]
         pan_range = fixture_type["panRange"]
         tilt_range = fixture_type["tiltRange"]
         pan -= 0.5
