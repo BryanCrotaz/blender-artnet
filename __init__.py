@@ -23,12 +23,15 @@ Use with Evee to live-preview your lighting.
 
 import bpy
 from bpy.app.handlers import persistent
+from bpy.props import BoolProperty, IntProperty, StringProperty
 
 from .src.artnet_socket import ArtNetSocket
 from .src.universe_store import UniverseStore
 from .src.fixture_store import FixtureStore
 from .src.fixture_type_store import FixtureTypeStore
 from .src.blender_sync import BlenderSynchroniser
+
+from .src.ui.light_panel import LightArtNetPanel
 
 global_data = {
     ArtNetSocket: ArtNetSocket,
@@ -69,7 +72,15 @@ def register():
     global_data["ArtNetSocket"] = None
     global_data["BlenderSynchroniser"] = None
     bpy.app.timers.register(_setup, first_interval=0.1)
+    # load objects when file is loaded
     bpy.app.handlers.load_post.append(_load_objects_from_scene)
+    # add light properties
+    bpy.types.Light.artnet_enabled = BoolProperty(name="artnet_enabled")
+    bpy.types.Light.artnet_fixture_type = StringProperty(name="artnet_fixture_type")
+    bpy.types.Light.artnet_universe = IntProperty(name="artnet_universe")
+    bpy.types.Light.artnet_base_address = IntProperty(name="artnet_base_address")
+    # register UI Panel
+    bpy.utils.register_class(LightArtNetPanel)
 
 def unregister():
     """Called from Blender"""
@@ -77,3 +88,11 @@ def unregister():
         global_data["ArtNetSocket"].disconnect()
     if bpy.app.timers.is_registered(_setup):
         bpy.app.timers.unregister(_setup)
+    # unregister ui panel
+    bpy.utils.unregister_class(LightArtNetPanel)
+    # remove light properties
+    del bpy.types.Light.artnet_enabled
+    del bpy.types.Light.artnet_fixture_type
+    del bpy.types.Light.artnet_universe
+    del bpy.types.Light.artnet_base_address
+
