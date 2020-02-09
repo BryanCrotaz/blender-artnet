@@ -12,8 +12,10 @@ Clone this repo and remember the folder where you put it
 3. Select the `Add-ons` tab
 4. Press the `Install...` button
 5. Select the `__init__.py` file in the folder you cloned into
-6. ...
-7. Profit!
+6. Press the `Install Addon` button
+7. Close the preferences dialog
+8. ...
+9. Profit!
 
 # Usage
 
