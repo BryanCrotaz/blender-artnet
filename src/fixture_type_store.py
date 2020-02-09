@@ -26,7 +26,7 @@ class FixtureTypeStore:
             "pan": 0,
             "tilt": 2,
             "zoom": 15,
-            "zoom_invert": True,
+            "zoom_invert": False,
             "panRange": 623,
             "tiltRange": 295,
             "minZoom": 7,

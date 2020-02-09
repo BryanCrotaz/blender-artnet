@@ -41,40 +41,49 @@ class BlenderSynchroniser:
                 if fixture_type is not None:
                     base_address = mapping["base_address"]
                     # push the data
-                    obj.data.color = self._get_color(universe, base_address, fixture_type)
-                    obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type)
-                    obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type)
+                    obj.data.color = self._get_color(universe, base_address, fixture_type) or [0, 0, 0]
+                    obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
+                    obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
 
     def _get_zoom(self, universe, base_address, fixture_type):
-        zoom = universe[base_address + fixture_type["zoom"]]
-        if fixture_type["zoom_invert"]:
-            zoom = 1 - zoom
-        min_zoom = fixture_type["minZoom"]
-        max_zoom = fixture_type["maxZoom"]
-        angle = min_zoom + zoom *(max_zoom-min_zoom)
-        return angle
+        try:
+            zoom = universe[base_address + fixture_type["zoom"]]
+            if "zoom_invert" in fixture_type and fixture_type["zoom_invert"]:
+                zoom = 1 - zoom
+            min_zoom = fixture_type["minZoom"]
+            max_zoom = fixture_type["maxZoom"]
+            angle = min_zoom + zoom *(max_zoom-min_zoom)
+            return angle
+        except IndexError:
+            return min_zoom # because no data yet
 
     def _get_rotation(self, universe, base_address, fixture_type):
-        pan = universe[base_address + fixture_type["pan"]]
-        tilt = universe[base_address + fixture_type["tilt"]]
-        pan_range = fixture_type["panRange"]
-        tilt_range = fixture_type["tiltRange"]
-        pan -= 0.5
-        tilt -= 0.5
-        pan *= pan_range
-        tilt *= tilt_range
-        return [0, tilt, pan]
+        try:
+            pan = universe[base_address + fixture_type["pan"]]
+            tilt = universe[base_address + fixture_type["tilt"]]
+            pan_range = fixture_type["panRange"]
+            tilt_range = fixture_type["tiltRange"]
+            pan -= 0.5
+            tilt -= 0.5
+            pan *= pan_range
+            tilt *= tilt_range
+            return [0, tilt, pan]
+        except IndexError:
+            return [0, 0, 0] # null movement, because no data yet
 
     def _get_color(self, universe, base_address, fixture_type):
         color_model = fixture_type["color"]
-        if color_model == "rgbw":
-            red = universe[base_address + fixture_type["red"]]
-            green = universe[base_address + fixture_type["green"]]
-            blue = universe[base_address + fixture_type["blue"]]
-            white = universe[base_address + fixture_type["white"]]
-            return ColorConverter.rgbw_to_rgb(red, green, blue, white)
-        elif color_model == "cmy":
-            cyan = universe[base_address + fixture_type["cyan"]]
-            magenta = universe[base_address + fixture_type["magenta"]]
-            yellow = universe[base_address + fixture_type["yellow"]]
-            return ColorConverter.cmy_to_rgb(cyan, magenta, yellow)
+        try:
+            if color_model == "rgbw":
+                red = universe[base_address + fixture_type["red"]]
+                green = universe[base_address + fixture_type["green"]]
+                blue = universe[base_address + fixture_type["blue"]]
+                white = universe[base_address + fixture_type["white"]]
+                return ColorConverter.rgbw_to_rgb(red, green, blue, white)
+            elif color_model == "cmy":
+                cyan = universe[base_address + fixture_type["cyan"]]
+                magenta = universe[base_address + fixture_type["magenta"]]
+                yellow = universe[base_address + fixture_type["yellow"]]
+                return ColorConverter.cmy_to_rgb(cyan, magenta, yellow)
+        except IndexError:
+            return [0, 0, 0] # black, because no data yet
