@@ -28,6 +28,35 @@ Add your own named fixture types in `src/fixture_type_store.py`
 
 ![Editing in Blender](./images/Blender-artnet.png)
 
+# Support
+
+## Version 1.2:
+
+Handles the following DMX channels (coarse only for now)
+* RGBW (additive)
+** red
+** green
+** blue
+* CMY (subtractive)
+** cyan
+** magenta
+** yellow
+* Colour wheels
+** currently continuously varying wheels are not supported
+* dimmer
+* zoom (invertable for some fixtures)
+* Movement
+** pan
+** tilt
+
+# Future ideas
+
+Focus can be handled by changing the spot size in Blender
+
+Frost can be handled by changing the spot blend radius in Blender
+
+Gobos can be handled by [https://www.youtube.com/watch?v=Af-yLsRpF7I]
+
 # Contributions wanted
 * Let's work out how to get fixture definitions in from an open source store
 * Work out how to map light lux levels to Blender light power
