@@ -37,6 +37,7 @@ Handles the following DMX channels (coarse only for now)
   * red
   * green
   * blue
+  * white
 * CMY (subtractive)
   * cyan
   * magenta
