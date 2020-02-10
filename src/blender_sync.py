@@ -32,20 +32,28 @@ class BlenderSynchroniser:
     def _update_blender_from_universe(self, index):
         fixtures = self.fixture_store.get_universe_fixtures(index)
         universe = self.universe_store.get_universe(index)
-        rawUniverse = self.universe_store.get_raw_universe(index)
+        raw_universe = self.universe_store.get_raw_universe(index)
         # push the data to blender objects
+        deleted_object_names = []
         for obj_name in fixtures:
-            mapping = fixtures[obj_name]
-            obj = mapping["object"]
-            if obj is not None:
-                fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
-                if fixture_type is not None:
-                    base_address = mapping["base_address"]
-                    # push the data
-                    obj.data.color = self._get_color(universe, rawUniverse, base_address, fixture_type) or [0, 0, 0]
-                    obj.data.energy = self._get_power(universe, base_address, fixture_type)
-                    obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
-                    obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
+            try:
+                mapping = fixtures[obj_name]
+                obj = mapping["object"]
+                if obj is not None:
+                    fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
+                    if fixture_type is not None:
+                        base_address = mapping["base_address"]
+                        # push the data
+                        obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
+                        obj.data.energy = self._get_power(universe, base_address, fixture_type)
+                        obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
+                        obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
+            except ReferenceError:
+                # object got deleted
+                deleted_object_names.append(obj_name)
+
+        for name in deleted_object_names:
+            self.fixture_store.remove_object_by_name(name)
 
     def _get_zoom(self, universe, base_address, fixture_type):
         try:

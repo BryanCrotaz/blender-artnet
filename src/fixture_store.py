@@ -37,6 +37,13 @@ class FixtureStore:
         # didn't find it
         return None
 
+    def remove_object_by_name(self, name):
+        """Remove a particular scene object"""
+        for universe_index in self._fixture_universes:
+            universe = self._fixture_universes[universe_index]
+            if name in universe:
+                del universe[name] # for safety look in all universes
+
     def _remove_object(self, obj: bpy.types.Object):
         """Remove a particular scene object"""
         for universe_index in self._fixture_universes:

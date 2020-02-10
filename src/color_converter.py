@@ -32,7 +32,6 @@ class ColorConverter:
         previous = last
         for pos in positions:
             if position <= pos:
-                print(position, pos, wheel_settings[pos])
                 ## we're between this one and the previous one
                 return wheel_settings[pos]
             previous = position
