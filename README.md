@@ -34,20 +34,20 @@ Add your own named fixture types in `src/fixture_type_store.py`
 
 Handles the following DMX channels (coarse only for now)
 * RGBW (additive)
-** red
-** green
-** blue
+  * red
+  * green
+  * blue
 * CMY (subtractive)
-** cyan
-** magenta
-** yellow
+  * cyan
+  * magenta
+  * yellow
 * Colour wheels
-** currently continuously varying wheels are not supported
+  * currently continuously varying wheels are not supported
 * dimmer
 * zoom (invertable for some fixtures)
 * Movement
-** pan
-** tilt
+  * pan
+  * tilt
 
 # Future ideas
 
