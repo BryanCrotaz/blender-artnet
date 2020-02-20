@@ -32,7 +32,7 @@ Add your own named fixture types in `src/fixture_type_store.py`
 
 ## Version 1.2:
 
-Only supports Spot light type in Blender - none of the other lights resemble real world fixtures. Maybe Area lights could be used to simulate light bars? Please submit a PR if you'd like them to be supported.
+Only supports Spot light type in Blender - none of the other lights resemble real world fixtures. 
 
 Handles the following DMX channels (coarse only for now)
 * RGBW (additive)
@@ -56,6 +56,8 @@ Handles the following DMX channels (coarse only for now)
 
 Focus can be handled by changing the spot size in Blender
 
+Maybe Area lights could be used to simulate light bars?
+
 Frost can be handled by changing the spot blend radius in Blender
 
 Gobos can be handled by [https://www.youtube.com/watch?v=Af-yLsRpF7I]
@@ -63,3 +65,5 @@ Gobos can be handled by [https://www.youtube.com/watch?v=Af-yLsRpF7I]
 # Contributions wanted
 * Let's work out how to get fixture definitions in from an open source store
 * Work out how to map light lux levels to Blender light power
+
+Please submit a PR if you have an improvement.
