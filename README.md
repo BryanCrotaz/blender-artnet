@@ -32,6 +32,8 @@ Add your own named fixture types in `src/fixture_type_store.py`
 
 ## Version 1.2:
 
+Only supports Spot light type in Blender - none of the other lights resemble real world fixtures. Maybe Area lights could be used to simulate light bars? Please submit a PR if you'd like them to be supported.
+
 Handles the following DMX channels (coarse only for now)
 * RGBW (additive)
   * red
