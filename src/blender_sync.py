@@ -40,20 +40,36 @@ class BlenderSynchroniser:
                 mapping = fixtures[obj_name]
                 obj = mapping["object"]
                 if obj is not None:
-                    fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
-                    if fixture_type is not None:
-                        base_address = mapping["base_address"]
-                        # push the data
-                        obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
-                        obj.data.energy = self._get_power(universe, base_address, fixture_type)
-                        obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
-                        obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
+                    if obj.type == "LIGHT":
+                        if obj.data.type == "SPOT":
+                            self.update_spot_light(obj, mapping, universe, raw_universe)
+                        elif obj.data.type == "AREA":
+                            self.update_area_light(obj, mapping, universe, raw_universe)
             except ReferenceError:
                 # object got deleted
                 deleted_object_names.append(obj_name)
 
         for name in deleted_object_names:
             self.fixture_store.remove_object_by_name(name)
+
+    def update_spot_light(self, obj, mapping, universe, raw_universe):
+        fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
+        if fixture_type is not None:
+            base_address = mapping["base_address"]
+            # push the data
+            obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
+            obj.data.energy = self._get_power(universe, base_address, fixture_type)
+            obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
+            obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
+
+    def update_area_light(self, obj, mapping, universe, raw_universe):
+        fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
+        if fixture_type is not None:
+            base_address = mapping["base_address"]
+            # push the data
+            obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
+            obj.data.energy = self._get_power(universe, base_address, fixture_type)
+            obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
 
     def _get_zoom(self, universe, base_address, fixture_type):
         try:
