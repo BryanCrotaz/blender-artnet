@@ -11,7 +11,10 @@ class LightArtNetPanel(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         """Only show panel for light objects"""
-        return context.object.type == 'LIGHT'
+        if context.object.type != 'LIGHT':
+            return False
+        light_type = context.object.data.type
+        return light_type == "SPOT" or light_type == "AREA"
 
     def draw_header(self, context):
         layout = self.layout
