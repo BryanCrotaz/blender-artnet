@@ -30,9 +30,14 @@ Add your own named fixture types in `src/fixture_type_store.py`
 
 # Support
 
+## Version 1.3:
+
+Supports Area light type in Blender
+Hides artnet panel for unsupported lights
+
 ## Version 1.2:
 
-Only supports Spot light type in Blender - none of the other lights resemble real world fixtures. 
+Supports Spot light type in Blender
 
 Handles the following DMX channels (coarse only for now)
 * RGBW (additive)
@@ -55,8 +60,6 @@ Handles the following DMX channels (coarse only for now)
 # Future ideas
 
 Focus can be handled by changing the spot size in Blender
-
-Maybe Area lights could be used to simulate light bars?
 
 Frost can be handled by changing the spot blend radius in Blender
 
