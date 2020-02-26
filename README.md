@@ -32,8 +32,8 @@ Add your own named fixture types in `src/fixture_type_store.py`
 
 ## Version 1.3:
 
-Supports Area light type in Blender
-Hides artnet panel for unsupported lights
+* Supports Area light type in Blender
+* Hides artnet panel for unsupported lights
 
 ## Version 1.2:
 
