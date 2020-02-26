@@ -67,6 +67,5 @@ Gobos can be handled by [https://www.youtube.com/watch?v=Af-yLsRpF7I]
 
 # Contributions wanted
 * Let's work out how to get fixture definitions in from an open source store
-* Work out how to map light lux levels to Blender light power
 
 Please submit a PR if you have an improvement.
