@@ -1,0 +1,8 @@
+Implement fixture definitions based on the GDTF format (https://gdtf-share.com/wiki/Main_Page)
+    Requires 3DS import support for importing models which is not implemented yet in Blender 2.83
+    
+Implement ArtTimeCode timecode output for controlling timecode shows in rendertime (https://art-net.org.uk/structure/time-keeping-triggering/arttimecode/)
+
+Implement assignment of any incoming Art-Net values to any numeric input
+    Would require a value mapping menu/window with conversion from int8 to any number scale. 
+    Preferrably with coarse/fine/ultra-fine combination of incoming channels to generate int16 & int 32.
