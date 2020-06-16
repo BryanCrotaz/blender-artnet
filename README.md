@@ -69,3 +69,8 @@ Gobos can be handled by [https://www.youtube.com/watch?v=Af-yLsRpF7I]
 * Let's work out how to get fixture definitions in from an open source store
 
 Please submit a PR if you have an improvement.
+
+# Funding
+I'm not a professional lighting designer - this came out of a hobby project to control lighting for an event I worked on for a friend. So I have no personal value gained by working on improving it (unlike other open source software I work on), although it is rather fun. If lighting professionals see a value in this plugin I would be happy to be funded to work on it via Patreon.
+
+Alternatively, I would be very happy to accept high quality PRs to improve the plugin.
