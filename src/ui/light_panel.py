@@ -28,6 +28,8 @@ class LightArtNetPanel(bpy.types.Panel):
             return
 
         layout = self.layout
-        layout.prop(data, "artnet_fixture_type", text="Fixture Type")
-        layout.prop(data, "artnet_universe", text="Universe")
-        layout.prop(data, "artnet_base_address", text="Base DMX Address")
+        layout.prop(data, "artnet_fixture_type")
+        layout.prop(data, "artnet_universe")
+        layout.prop(data, "artnet_base_address")
+        layout.prop(data, "artnet_pan_target")
+        layout.prop(data, "artnet_tilt_target")

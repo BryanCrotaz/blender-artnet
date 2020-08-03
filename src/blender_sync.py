@@ -59,7 +59,7 @@ class BlenderSynchroniser:
             # push the data
             obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
             obj.data.energy = self._get_power(universe, base_address, fixture_type)
-            obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
+            self._set_rotation(obj, universe, base_address, fixture_type)
             obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
 
     def update_area_light(self, obj, mapping, universe, raw_universe):
@@ -69,7 +69,7 @@ class BlenderSynchroniser:
             # push the data
             obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
             obj.data.energy = self._get_power(universe, base_address, fixture_type)
-            obj.rotation_euler = self._get_rotation(universe, base_address, fixture_type) or [0, 0, 0]
+            self._set_rotation(obj, universe, base_address, fixture_type)
 
     def _get_zoom(self, universe, base_address, fixture_type):
         try:
@@ -93,18 +93,56 @@ class BlenderSynchroniser:
             return 1000 # because no data yet
 
     def _get_rotation(self, universe, base_address, fixture_type):
+        pan = universe[base_address + fixture_type["pan"]]
+        tilt = universe[base_address + fixture_type["tilt"]]
+        pan_range = fixture_type["panRange"]
+        tilt_range = fixture_type["tiltRange"]
+        pan -= 0.5
+        tilt -= 0.5
+        pan *= pan_range
+        tilt *= tilt_range
+        return [pan, tilt]
+
+    def _set_rotation(self, obj, universe, base_address, fixture_type):
+        if obj.data.artnet_old_pan_target != "none":
+            self.set_rotation_on_target(obj, obj.data.artnet_old_pan_target, 0)
+            obj.data.artnet_old_pan_target = "none"
+
+        if obj.data.artnet_old_tilt_target != "none":
+            self.set_rotation_on_target(obj, obj.data.artnet_old_tilt_target, 0)
+            obj.data.artnet_old_tilt_target = "none"
+
         try:
-            pan = universe[base_address + fixture_type["pan"]]
-            tilt = universe[base_address + fixture_type["tilt"]]
-            pan_range = fixture_type["panRange"]
-            tilt_range = fixture_type["tiltRange"]
-            pan -= 0.5
-            tilt -= 0.5
-            pan *= pan_range
-            tilt *= tilt_range
-            return [0, tilt, pan]
+            rotation = self._get_rotation(universe, base_address, fixture_type)
         except IndexError:
-            return [0, 0, 0] # null movement, because no data yet
+            print ('_set_rotation error')
+            pass # null movement, because no data yet
+        pan = rotation[0]
+        tilt = rotation[1]
+        self.set_rotation_on_target(obj, obj.data.artnet_pan_target, pan)
+        self.set_rotation_on_target(obj, obj.data.artnet_tilt_target, tilt)
+
+    def set_rotation_on_target(self, obj, target, rotation):
+        if target == "lx":
+            obj.delta_rotation_euler.x = rotation
+        elif target == "ly":
+            obj.delta_rotation_euler.y = rotation
+        elif target == "lz":
+            obj.delta_rotation_euler.z = rotation
+        elif obj.parent is not None:
+            if target == "px":
+                obj.parent.delta_rotation_euler.x = rotation
+            elif target == "py":
+                obj.parent.delta_rotation_euler.y = rotation
+            elif target == "pz":
+                obj.parent.delta_rotation_euler.z = rotation
+            elif obj.parent.parent is not None:
+                if target == "gpx":
+                    obj.parent.parent.delta_rotation_euler.x = rotation
+                elif target == "gpy":
+                    obj.parent.parent.delta_rotation_euler.y = rotation
+                elif target == "gpz":
+                    obj.parent.parent.delta_rotation_euler.z = rotation
 
     def _get_color(self, universe, rawUniverse, base_address, fixture_type):
         color_mode = fixture_type["colorMode"]

@@ -23,7 +23,7 @@ Use with Evee to live-preview your lighting.
 
 import bpy
 from bpy.app.handlers import persistent
-from bpy.props import BoolProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, IntProperty, StringProperty, EnumProperty
 
 from .src.artnet_socket import ArtNetSocket
 from .src.universe_store import UniverseStore, ALL_UNIVERSES
@@ -36,8 +36,24 @@ from .src.ui.light_panel import LightArtNetPanel
 GLOBAL_DATA = {
     ArtNetSocket: ArtNetSocket,
     BlenderSynchroniser: BlenderSynchroniser,
-    FixtureStore: FixtureStore
+    FixtureStore: FixtureStore,
 }
+
+PAN_TILT_TARGETS = [
+    ('lx', 'Light x', 'tilt around light x axis', 0),
+    ('ly', 'Light y', 'tilt around light y axis', 1),
+    ('lz', 'Light z', 'tilt around light z axis', 2),
+    None,
+    ('px', 'Parent x', 'tilt around parent x axis', 3),
+    ('py', 'Parent y', 'tilt around parent y axis', 4),
+    ('pz', 'Parent z', 'tilt around parent z axis', 5),
+    None,
+    ('gpx', 'Grandparent x', 'tilt around grandparent x axis', 6),
+    ('gpy', 'Grandparent y', 'tilt around grandparent y axis', 7),
+    ('gpz', 'Grandparent z', 'tilt around grandparent z axis', 8),
+    None,
+    ('none', 'Ignore', 'ignore tilt from Artnet', 9)
+]
 
 bl_info = {
     "name": "ArtNet Lighting Controller",
@@ -87,23 +103,69 @@ def register():
     bpy.app.handlers.load_post.append(_on_file_loaded)
     # add light properties
     bpy.types.Light.artnet_enabled = BoolProperty(
-        name="artnet_enabled",
+        name="Enabled",
         update=_light_data_change
     )
     bpy.types.Light.artnet_universe = IntProperty(
-        name="artnet_universe",
+        name="Universe",
         update=_light_data_change
     )
     bpy.types.Light.artnet_fixture_type = StringProperty(
-        name="artnet_fixture_type",
+        name="Fixture Type",
         update=_light_data_change
     )
     bpy.types.Light.artnet_base_address = IntProperty(
-        name="artnet_base_address",
+        name="Base DMX Address",
         update=_light_data_change
+    )
+    bpy.types.Light.artnet_pan_target = EnumProperty(
+        name="Pan Target",
+        items=PAN_TILT_TARGETS,
+        default="lx",
+        update=_light_data_change,
+        get=get_pan_target,
+        set=set_pan_target
+    )
+    bpy.types.Light.artnet_tilt_target = EnumProperty(   
+        name="Tilt Target",
+        items=PAN_TILT_TARGETS,
+        default="lz",
+        update=_light_data_change,
+        get=get_tilt_target,
+        set=set_tilt_target
+    )
+    bpy.types.Light.artnet_old_pan_target = EnumProperty(
+        name="Old Pan Target",
+        items=PAN_TILT_TARGETS,
+        default="none"
+    )
+    bpy.types.Light.artnet_old_tilt_target = EnumProperty(
+        name="Old Tilt Target",
+        items=PAN_TILT_TARGETS,
+        default="none"
     )
     # register UI Panel
     bpy.utils.register_class(LightArtNetPanel)
+
+def get_pan_target(self):
+    return self.get("artnet_pan_target", "lz")
+
+def set_pan_target(self, value):
+    self.artnet_old_pan_target = get_pan_tilt_target_from_int(self.get("artnet_pan_target", 9))   
+    self["artnet_pan_target"] = value
+
+def get_pan_tilt_target_from_int(value):
+    for target in PAN_TILT_TARGETS:
+        if target is not None:
+            if target[3] == value:
+                return target[0]
+
+def get_tilt_target(self):
+    return self.get("artnet_tilt_target", "lx")
+
+def set_tilt_target(self, value):
+    self.artnet_old_tilt_target = get_pan_tilt_target_from_int(self.get("artnet_tilt_target", 9))   
+    self["artnet_tilt_target"] = value
 
 def unregister():
     """Called from Blender"""
@@ -119,6 +181,8 @@ def unregister():
     del bpy.types.Light.artnet_fixture_type
     del bpy.types.Light.artnet_universe
     del bpy.types.Light.artnet_base_address
+    del bpy.types.Light.artnet_pan_target
+    del bpy.types.Light.artnet_tilt_target
 
 def _light_data_change(data, context):
     """One of the lights changed in the scene - update our internal data"""
