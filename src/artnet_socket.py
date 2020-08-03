@@ -75,8 +75,8 @@ class ArtNetSocket:
             except Exception:
                 pass
             if self._shutdown:
+                self.disconnect()
                 return
-
 
     def parse_packet(self, packet):
         """Parse a valid artnet universe packet"""
