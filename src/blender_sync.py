@@ -124,25 +124,25 @@ class BlenderSynchroniser:
 
     def set_rotation_on_target(self, obj, target, rotation):
         if target == "lx":
-            obj.delta_rotation_euler.x = rotation
+            obj.rotation_euler.x = rotation
         elif target == "ly":
-            obj.delta_rotation_euler.y = rotation
+            obj.rotation_euler.y = rotation
         elif target == "lz":
-            obj.delta_rotation_euler.z = rotation
+            obj.rotation_euler.z = rotation
         elif obj.parent is not None:
             if target == "px":
-                obj.parent.delta_rotation_euler.x = rotation
+                obj.parent.rotation_euler.x = rotation
             elif target == "py":
-                obj.parent.delta_rotation_euler.y = rotation
+                obj.parent.rotation_euler.y = rotation
             elif target == "pz":
-                obj.parent.delta_rotation_euler.z = rotation
+                obj.parent.rotation_euler.z = rotation
             elif obj.parent.parent is not None:
                 if target == "gpx":
-                    obj.parent.parent.delta_rotation_euler.x = rotation
+                    obj.parent.parent.rotation_euler.x = rotation
                 elif target == "gpy":
-                    obj.parent.parent.delta_rotation_euler.y = rotation
+                    obj.parent.parent.rotation_euler.y = rotation
                 elif target == "gpz":
-                    obj.parent.parent.delta_rotation_euler.z = rotation
+                    obj.parent.parent.rotation_euler.z = rotation
 
     def _get_color(self, universe, rawUniverse, base_address, fixture_type):
         color_mode = fixture_type["colorMode"]
