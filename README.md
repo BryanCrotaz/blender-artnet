@@ -57,6 +57,14 @@ Handles the following DMX channels (coarse only for now)
   * pan
   * tilt
 
+# Pan, Tilt and fixture modelling
+
+If fixtures are visible in the scene, you may wish to model the body of the fixture. Typically it would have a panning section, containing a tilting section with the lamp in it. If you parent the objects in this chain, you can select the parent or grandparent to be animated with pan and tilt.
+
+To use this method, select the light in Blender and select the Pan Target and Tilt Target. Select which axis of the light, its parent, or its grandparent to affect. You can also choose _none_, for example if the fixture has panning but no tilt motor.
+
+Pan and tilt affect the delta rotation, so you can use the rotation transform to set the centre position of your fixture models. 
+
 # Future ideas
 
 Focus can be handled by changing the spot size in Blender
