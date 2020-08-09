@@ -73,11 +73,11 @@ class BlenderSynchroniser:
 
     def _get_zoom(self, universe, base_address, fixture_type):
         try:
+            min_zoom = fixture_type["minZoom"]
+            max_zoom = fixture_type["maxZoom"]
             zoom = universe[base_address + fixture_type["zoom"]]
             if "zoom_invert" in fixture_type and fixture_type["zoom_invert"]:
                 zoom = 1 - zoom
-            min_zoom = fixture_type["minZoom"]
-            max_zoom = fixture_type["maxZoom"]
             angle = min_zoom + zoom *(max_zoom-min_zoom)
             return angle
         except IndexError:

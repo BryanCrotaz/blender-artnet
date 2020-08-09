@@ -14,7 +14,7 @@ class FixtureStore:
         """Find the ArtNet enabled objects in the scene"""
         objects = bpy.context.scene.objects
         for obj in objects:
-            if "artnet_enabled" in obj.data and obj.data.artnet_enabled:
+            if obj.data and "artnet_enabled" in obj.data and obj.data.artnet_enabled:
                 self._add_object(obj)
 
     @property

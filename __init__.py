@@ -148,7 +148,7 @@ def register():
     bpy.utils.register_class(LightArtNetPanel)
 
 def get_pan_target(self):
-    return self.get("artnet_pan_target", "lz")
+    return self.get("artnet_pan_target", 2)
 
 def set_pan_target(self, value):
     self.artnet_old_pan_target = get_pan_tilt_target_from_int(self.get("artnet_pan_target", 9))   
@@ -161,7 +161,7 @@ def get_pan_tilt_target_from_int(value):
                 return target[0]
 
 def get_tilt_target(self):
-    return self.get("artnet_tilt_target", "lx")
+    return self.get("artnet_tilt_target", 0)
 
 def set_tilt_target(self, value):
     self.artnet_old_tilt_target = get_pan_tilt_target_from_int(self.get("artnet_tilt_target", 9))   
