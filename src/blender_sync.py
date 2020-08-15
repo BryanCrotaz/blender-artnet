@@ -36,6 +36,7 @@ class BlenderSynchroniser:
         # push the data to blender objects
         deleted_object_names = []
         for obj_name in fixtures:
+            # todo remove this try block for speed
             try:
                 mapping = fixtures[obj_name]
                 obj = mapping["object"]
@@ -72,6 +73,7 @@ class BlenderSynchroniser:
             self._set_rotation(obj, universe, base_address, fixture_type)
 
     def _get_zoom(self, universe, base_address, fixture_type):
+        # todo remove this try block for speed
         try:
             min_zoom = fixture_type["minZoom"]
             max_zoom = fixture_type["maxZoom"]
@@ -84,6 +86,7 @@ class BlenderSynchroniser:
             return min_zoom # because no data yet
 
     def _get_power(self, universe, base_address, fixture_type):
+        # todo remove this try block for speed
         try:
             dimmer = universe[base_address + fixture_type["dimmer"]]
             lumens = fixture_type["lumens"]
@@ -112,11 +115,12 @@ class BlenderSynchroniser:
             self.set_rotation_on_target(obj, obj.data.artnet_old_tilt_target, 0)
             obj.data.artnet_old_tilt_target = "none"
 
+        # todo remove this try block for speed
         try:
             rotation = self._get_rotation(universe, base_address, fixture_type)
         except IndexError:
-            print ('_set_rotation error')
-            pass # null movement, because no data yet
+            print('_set_rotation error')
+            return # null movement, because no data yet
         pan = rotation[0]
         tilt = rotation[1]
         self.set_rotation_on_target(obj, obj.data.artnet_pan_target, pan)
@@ -146,6 +150,7 @@ class BlenderSynchroniser:
 
     def _get_color(self, universe, rawUniverse, base_address, fixture_type):
         color_mode = fixture_type["colorMode"]
+        # todo remove this try block for speed
         try:
             if color_mode == "rgbw":
                 red = universe[base_address + fixture_type["red"]]

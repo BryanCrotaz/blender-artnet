@@ -2,6 +2,7 @@
 
 import socket
 import threading
+import time
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 6454
@@ -59,12 +60,19 @@ class ArtNetSocket:
         """Thread loop"""
         # runs in a background thread
         # must not access blender directly
+
+        # avoid setting up exception blocks inside the main loop
         while True:
             try:
-                # read the packet
-                packet, _addr = self._socket.recvfrom(1024)
-                if len(packet) > 18 and ArtNetSocket.is_art_net(packet):
-                    self.parse_packet(packet)
+                while True:
+                    # read the packet in a tight loop
+                    if self._shutdown:
+                        self.disconnect()
+                        return
+                    if self._socket is None:
+                        time.sleep(0.5)
+                    else:
+                        self.read_packet()
             except socket.timeout:
                 # do nothing
                 pass
@@ -74,9 +82,11 @@ class ArtNetSocket:
                 self._socket = self.connect()
             except Exception:
                 pass
-            if self._shutdown:
-                self.disconnect()
-                return
+
+    def read_packet(self):
+        packet, _addr = self._socket.recvfrom(1024)
+        if len(packet) > 18 and ArtNetSocket.is_art_net(packet):
+            self.parse_packet(packet)
 
     def parse_packet(self, packet):
         """Parse a valid artnet universe packet"""
