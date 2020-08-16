@@ -3,16 +3,22 @@
 import bpy
 
 from .color_converter import ColorConverter
-
+    
 class BlenderSynchroniser:
     """Writes universe data to Blender"""
+
+    artnet_control_state = 'listen'
 
     def __init__(self, universe_store, fixture_store, fixture_type_store):
         self.universe_store = universe_store
         self.fixture_store = fixture_store
         self.fixture_type_store = fixture_type_store
+        self.add_keyframes = False
+
         bpy.app.timers.register(self._update_blender, first_interval=0.1, persistent=True)
 
+    def __del__(self):
+        bpy.app.timers.unregister(self._update_blender)
 
     def _update_blender(self):
         """main loop"""
@@ -25,8 +31,16 @@ class BlenderSynchroniser:
             filter(lambda x: x in self.fixture_store.fixture_universe_ids, universes_pending)
         )
 
-        for universe_index in universes_pending:
-            self._update_blender_from_universe(universe_index)
+        control_state = self.artnet_control_state
+        if control_state != 'play':
+            if control_state == 'record':
+                self.add_keyframes = True
+            else:
+                self.add_keyframes = False
+
+            for universe_index in universes_pending:
+                self._update_blender_from_universe(universe_index)
+
         return 0.03 # call again in 0.05 seconds - 30fps
 
     def _update_blender_from_universe(self, index):
@@ -127,26 +141,40 @@ class BlenderSynchroniser:
         self.set_rotation_on_target(obj, obj.data.artnet_tilt_target, tilt)
 
     def set_rotation_on_target(self, obj, target, rotation):
+        kf_target = None
         if target == "lx":
             obj.rotation_euler.x = rotation
+            kf_target = obj
         elif target == "ly":
             obj.rotation_euler.y = rotation
+            kf_target = obj
         elif target == "lz":
             obj.rotation_euler.z = rotation
+            kf_target = obj
         elif obj.parent is not None:
             if target == "px":
                 obj.parent.rotation_euler.x = rotation
+                kf_target = obj.parent
             elif target == "py":
                 obj.parent.rotation_euler.y = rotation
+                kf_target = obj.parent
             elif target == "pz":
                 obj.parent.rotation_euler.z = rotation
+                kf_target = obj.parent
             elif obj.parent.parent is not None:
                 if target == "gpx":
                     obj.parent.parent.rotation_euler.x = rotation
+                    kf_target = obj.parent.parent
                 elif target == "gpy":
                     obj.parent.parent.rotation_euler.y = rotation
+                    kf_target = obj.parent.parent
                 elif target == "gpz":
                     obj.parent.parent.rotation_euler.z = rotation
+                    kf_target = obj.parent.parent
+
+        if (kf_target is not None) and self.add_keyframes:
+            kf_target.keyframe_insert(data_path="rotation_euler",
+                                      frame=bpy.context.scene.frame_current)
 
     def _get_color(self, universe, rawUniverse, base_address, fixture_type):
         color_mode = fixture_type["colorMode"]

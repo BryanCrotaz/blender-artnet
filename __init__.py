@@ -22,7 +22,9 @@ Use with Evee to live-preview your lighting.
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+
 from bpy.app.handlers import persistent
+from bpy.types import WindowManager, Light
 from bpy.props import BoolProperty, IntProperty, StringProperty, EnumProperty
 
 from .src.artnet_socket import ArtNetSocket
@@ -32,12 +34,7 @@ from .src.fixture_type_store import FixtureTypeStore
 from .src.blender_sync import BlenderSynchroniser
 
 from .src.ui.light_panel import LightArtNetPanel
-
-GLOBAL_DATA = {
-    ArtNetSocket: ArtNetSocket,
-    BlenderSynchroniser: BlenderSynchroniser,
-    FixtureStore: FixtureStore,
-}
+from .src.globals import GLOBAL_DATA
 
 PAN_TILT_TARGETS = [
     ('lx', 'Light x', 'tilt around light x axis', 0),
@@ -85,6 +82,8 @@ def _setup():
     )
     fixture_store.load_objects_from_scene()
     universes.notify_universe_change(ALL_UNIVERSES)
+
+    bpy.types.TIME_MT_editor_menus.append(draw_artnet_property)
     return None
 
 @persistent
@@ -102,23 +101,54 @@ def register():
     # load objects when file is loaded
     bpy.app.handlers.load_post.append(_on_file_loaded)
     # add light properties
-    bpy.types.Light.artnet_enabled = BoolProperty(
+    register_light_properties()
+    # register Light UI Panel
+    bpy.utils.register_class(LightArtNetPanel)
+
+    WindowManager.addon_blender_artnet_control_state = EnumProperty(
+        name="ArtNet Control",
+        items=[
+            ('listen', '', 'Listen to Artnet', 'UNLOCKED', 0),
+            ('record', '', 'Record keyframes from Artnet', 'REC', 1),
+            ('play', '', 'Ignore Artnet and play keyframes', 'LOCKED', 2)
+        ],
+        description="ArtNet Control State",
+        update=artnet_control_state_update,
+        default='listen'
+    )
+
+def draw_artnet_property(menu, context):
+    layout = menu.layout
+    # call the property
+    box = layout.row()
+    box.prop(context.window_manager, "addon_blender_artnet_control_state", expand=True)
+    if context.window_manager.addon_blender_artnet_control_state == 'record':
+        box.alert = True
+    else:
+        box.alert = False
+    box.label(text="Artnet")
+
+def artnet_control_state_update(window_manager, context):
+    GLOBAL_DATA.get('BlenderSynchroniser').artnet_control_state = window_manager.addon_blender_artnet_control_state
+
+def register_light_properties():
+    Light.artnet_enabled: BoolProperty = BoolProperty(
         name="Enabled",
         update=_light_data_change
     )
-    bpy.types.Light.artnet_universe = IntProperty(
+    Light.artnet_universe: IntProperty = IntProperty(
         name="Universe",
         update=_light_data_change
     )
-    bpy.types.Light.artnet_fixture_type = StringProperty(
+    Light.artnet_fixture_type: StringProperty = StringProperty(
         name="Fixture Type",
         update=_light_data_change
     )
-    bpy.types.Light.artnet_base_address = IntProperty(
+    Light.artnet_base_address: IntProperty = IntProperty(
         name="Base DMX Address",
         update=_light_data_change
     )
-    bpy.types.Light.artnet_pan_target = EnumProperty(
+    Light.artnet_pan_target: EnumProperty = EnumProperty(
         name="Pan Target",
         items=PAN_TILT_TARGETS,
         default="lx",
@@ -126,7 +156,7 @@ def register():
         get=get_pan_target,
         set=set_pan_target
     )
-    bpy.types.Light.artnet_tilt_target = EnumProperty(   
+    Light.artnet_tilt_target: EnumProperty = EnumProperty(   
         name="Tilt Target",
         items=PAN_TILT_TARGETS,
         default="lz",
@@ -134,18 +164,16 @@ def register():
         get=get_tilt_target,
         set=set_tilt_target
     )
-    bpy.types.Light.artnet_old_pan_target = EnumProperty(
+    Light.artnet_old_pan_target: EnumProperty = EnumProperty(
         name="Old Pan Target",
         items=PAN_TILT_TARGETS,
         default="none"
     )
-    bpy.types.Light.artnet_old_tilt_target = EnumProperty(
+    Light.artnet_old_tilt_target: EnumProperty = EnumProperty(
         name="Old Tilt Target",
         items=PAN_TILT_TARGETS,
         default="none"
     )
-    # register UI Panel
-    bpy.utils.register_class(LightArtNetPanel)
 
 def get_pan_target(self):
     return self.get("artnet_pan_target", 2)
@@ -176,13 +204,18 @@ def unregister():
         bpy.app.timers.unregister(_setup)
     # unregister ui panel
     bpy.utils.unregister_class(LightArtNetPanel)
+    bpy.types.TIME_MT_editor_menus.remove(draw_artnet_property)
+    del WindowManager.addon_blender_artnet_control_state
+
     # remove light properties
-    del bpy.types.Light.artnet_enabled
-    del bpy.types.Light.artnet_fixture_type
-    del bpy.types.Light.artnet_universe
-    del bpy.types.Light.artnet_base_address
-    del bpy.types.Light.artnet_pan_target
-    del bpy.types.Light.artnet_tilt_target
+    del Light.artnet_enabled
+    del Light.artnet_fixture_type
+    del Light.artnet_universe
+    del Light.artnet_base_address
+    del Light.artnet_pan_target
+    del Light.artnet_tilt_target
+    del Light.artnet_old_pan_target
+    del Light.artnet_old_tilt_target
 
 def _light_data_change(data, context):
     """One of the lights changed in the scene - update our internal data"""
