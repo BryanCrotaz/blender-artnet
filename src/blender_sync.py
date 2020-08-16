@@ -3,11 +3,12 @@
 import bpy
 
 from .color_converter import ColorConverter
-    
+
 class BlenderSynchroniser:
     """Writes universe data to Blender"""
 
     artnet_control_state = 'listen'
+    frame_current = 0
 
     def __init__(self, universe_store, fixture_store, fixture_type_store):
         self.universe_store = universe_store
@@ -35,6 +36,7 @@ class BlenderSynchroniser:
         if control_state != 'play':
             if control_state == 'record':
                 self.add_keyframes = True
+                self.frame_current = bpy.context.scene.frame_current
             else:
                 self.add_keyframes = False
 
@@ -60,6 +62,8 @@ class BlenderSynchroniser:
                             self.update_spot_light(obj, mapping, universe, raw_universe)
                         elif obj.data.type == "AREA":
                             self.update_area_light(obj, mapping, universe, raw_universe)
+                        elif obj.data.type == "POINT":
+                            self.update_point_light(obj, mapping, universe, raw_universe)
             except ReferenceError:
                 # object got deleted
                 deleted_object_names.append(obj_name)
@@ -76,6 +80,13 @@ class BlenderSynchroniser:
             obj.data.energy = self._get_power(universe, base_address, fixture_type)
             self._set_rotation(obj, universe, base_address, fixture_type)
             obj.data.spot_size = self._get_zoom(universe, base_address, fixture_type) or 0
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="color",
+                                    frame=self.frame_current)
+                obj.data.keyframe_insert(data_path="energy",
+                                    frame=self.frame_current)
+                obj.data.keyframe_insert(data_path="spot_size",
+                                    frame=self.frame_current)
 
     def update_area_light(self, obj, mapping, universe, raw_universe):
         fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
@@ -85,6 +96,24 @@ class BlenderSynchroniser:
             obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
             obj.data.energy = self._get_power(universe, base_address, fixture_type)
             self._set_rotation(obj, universe, base_address, fixture_type)
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="color",
+                                    frame=self.frame_current)
+                obj.data.keyframe_insert(data_path="energy",
+                                    frame=self.frame_current)
+
+    def update_point_light(self, obj, mapping, universe, raw_universe):
+        fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
+        if fixture_type is not None:
+            base_address = mapping["base_address"]
+            # push the data
+            obj.data.color = self._get_color(universe, raw_universe, base_address, fixture_type) or [0, 0, 0]
+            obj.data.energy = self._get_power(universe, base_address, fixture_type)
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="color",
+                                    frame=self.frame_current)
+                obj.data.keyframe_insert(data_path="energy",
+                                    frame=self.frame_current)
 
     def _get_zoom(self, universe, base_address, fixture_type):
         # todo remove this try block for speed
@@ -174,7 +203,7 @@ class BlenderSynchroniser:
 
         if (kf_target is not None) and self.add_keyframes:
             kf_target.keyframe_insert(data_path="rotation_euler",
-                                      frame=bpy.context.scene.frame_current)
+                                      frame=self.frame_current)
 
     def _get_color(self, universe, rawUniverse, base_address, fixture_type):
         color_mode = fixture_type["colorMode"]

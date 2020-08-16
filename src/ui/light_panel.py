@@ -14,7 +14,7 @@ class LightArtNetPanel(bpy.types.Panel):
         if context.object.type != 'LIGHT':
             return False
         light_type = context.object.data.type
-        return light_type == "SPOT" or light_type == "AREA"
+        return light_type == "SPOT" or light_type == "AREA" or light_type == "POINT"
 
     def draw_header(self, context):
         layout = self.layout
@@ -31,5 +31,8 @@ class LightArtNetPanel(bpy.types.Panel):
         layout.prop(data, "artnet_fixture_type")
         layout.prop(data, "artnet_universe")
         layout.prop(data, "artnet_base_address")
-        layout.prop(data, "artnet_pan_target")
-        layout.prop(data, "artnet_tilt_target")
+
+        light_type = context.object.data.type
+        if light_type == "SPOT" or light_type == "AREA":
+            layout.prop(data, "artnet_pan_target")
+            layout.prop(data, "artnet_tilt_target")
