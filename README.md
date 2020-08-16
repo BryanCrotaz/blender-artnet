@@ -26,9 +26,25 @@ address and fixture type
 
 Add your own named fixture types in `src/fixture_type_store.py`
 
+## Keyframes
+
+In the timeline header, look for the Artnet buttons (locked, unlocked and record)
+
+* **Unlocked** Responds in real time to Artnet data
+* **Record** Listens to Artnet data and saves it as keyframes
+* **Locked** Ignores Artnet incoming data
+
 ![Editing in Blender](./images/Blender-artnet.png)
 
 # Support
+
+## Version 1.6:
+
+* Save ArtNet animation to keyframes for playback later, e.g. rendering in Cycles
+
+## Version 1.5:
+
+* Target parent or grandparent object with pan and tilt settings - great for moving head modelling
 
 ## Version 1.3:
 
