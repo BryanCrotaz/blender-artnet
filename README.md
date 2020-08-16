@@ -41,6 +41,7 @@ In the timeline header, look for the Artnet buttons (locked, unlocked and record
 ## Version 1.6:
 
 * Save ArtNet animation to keyframes for playback later, e.g. rendering in Cycles
+* Supports Point light type in Blender
 
 ## Version 1.5:
 
