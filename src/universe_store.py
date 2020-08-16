@@ -7,7 +7,7 @@ ALL_UNIVERSES = -1
 class UniverseStore:
     """Stores universe data with thread locking"""
 
-    UpdatesPending = {} # map of universe indices : bool
+    UpdatesPending = {} # map of universe indices : list of updated channels
     UpdatesLock = threading.Lock()
 
     _universes = []  # float data 0-1
@@ -23,23 +23,23 @@ class UniverseStore:
         self._ensure_universe_exists(index)
         return self._raw_universes[index]
 
-    def notify_universe_change(self, index):
+    def notify_universe_change(self, index, changes):
         """Threadsafe notify that a universe is dirty"""
         with self.UpdatesLock:
             if index == ALL_UNIVERSES:
                 for i in range(len(self._universes)):
-                    self.UpdatesPending[i] = True
+                    self.UpdatesPending[i] = range(0, 511)
             else:
-                self.UpdatesPending[index] = True
+                self.UpdatesPending[index] = changes
 
     def get_pending_universes(self):
         """Returns a list of universes that need to be synced to Blender"""
-        universes_pending = []
+        universes_pending = {}
         with self.UpdatesLock:
             for universe_index in self.UpdatesPending:
-                if self.UpdatesPending[universe_index]:
-                    universes_pending.append(universe_index)
-                    self.UpdatesPending[universe_index] = False
+                if self.UpdatesPending[universe_index] is not None:
+                    universes_pending[universe_index] = self.UpdatesPending[universe_index]
+                    self.UpdatesPending[universe_index] = None
         return universes_pending
 
     def _ensure_universe_exists(self, index):

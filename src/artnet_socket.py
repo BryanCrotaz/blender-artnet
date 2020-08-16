@@ -98,7 +98,7 @@ class ArtNetSocket:
             universe = self.universe_store.get_universe(universe_index)
             # raw_universe has byte data to detect changes
             raw_universe = self.universe_store.get_raw_universe(universe_index)
-            universe_changed = False
+            universe_changes = []
             # loop through the channels
             for i in range(channels):
                 raw_value = packet[i+18]
@@ -106,7 +106,7 @@ class ArtNetSocket:
                     # data changed since last time
                     raw_universe[i] = raw_value
                     universe[i] = raw_value / 255.0
-                    universe_changed = True
+                    universe_changes.append(i)
             # let the main thread know that there's an update
-            if universe_changed:
-                self.universe_store.notify_universe_change(universe_index)
+            if len(universe_changes) > 0:
+                self.universe_store.notify_universe_change(universe_index, universe_changes)

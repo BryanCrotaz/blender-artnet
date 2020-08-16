@@ -38,6 +38,10 @@ In the timeline header, look for the Artnet buttons (locked, unlocked and record
 
 # Support
 
+## Version 1.6.1:
+
+* Only create key frames for channels that changed
+
 ## Version 1.6:
 
 * Save ArtNet animation to keyframes for playback later, e.g. rendering in Cycles

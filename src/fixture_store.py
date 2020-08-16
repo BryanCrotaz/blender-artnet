@@ -8,7 +8,8 @@ class FixtureStore:
     def __init__(self):
         self.load_objects_from_scene()
 
-    _fixture_universes = {}
+    _fixture_universes = {} # map of universe: map of name:fixture
+    _universe_fixtures = {} # map of universe: map of channel:fixture
 
     def load_objects_from_scene(self):
         """Find the ArtNet enabled objects in the scene"""
@@ -22,7 +23,7 @@ class FixtureStore:
         """Returns a list of universe ids which have fixtures defined"""
         return self._fixture_universes.keys()
 
-    def get_universe_fixtures(self, index):
+    def get_fixtures_for_universe(self, index):
         """Get the fixtures defined for a particular universe"""
         return self._fixture_universes[index]
 
@@ -60,6 +61,7 @@ class FixtureStore:
             return
         if not obj.data.artnet_universe in self._fixture_universes:
             self._fixture_universes[obj.data.artnet_universe] = {}
+        # universe:fixture
         universe = self._fixture_universes[obj.data.artnet_universe]
         fixture = {}
         fixture["object"] = obj
@@ -68,6 +70,10 @@ class FixtureStore:
         fixture["base_address"] = obj.data.artnet_base_address - 1
         universe[obj.name] = fixture
         obj.rotation_mode = "XYZ"
+        # universe:channel:fixture
+    #    universe = self._universe_fixtures[obj.data.artnet_universe]
+    #    if obj.data.artnet_fixture_type is not None:
+
 
     def update_object(self, obj: bpy.types.Object):
         """Update an object in our store after it was changed in the UI"""

@@ -63,7 +63,7 @@ bl_info = {
     "category": "Lighting",
     "support": "COMMUNITY",
     "author": "Bryan Crotaz",
-    "version": (1, 6),
+    "version": (1, 6, 1),
     "wiki_url": "https://github.com/BryanCrotaz/blender-artnet"
 }
 
@@ -81,7 +81,7 @@ def _setup():
         fixture_types
     )
     fixture_store.load_objects_from_scene()
-    universes.notify_universe_change(ALL_UNIVERSES)
+    universes.notify_universe_change(ALL_UNIVERSES, [])
 
     bpy.types.TIME_MT_editor_menus.append(draw_artnet_property)
     return None
@@ -91,7 +91,7 @@ def _on_file_loaded(_, __):
     if "FixtureStore" in GLOBAL_DATA:
         GLOBAL_DATA["FixtureStore"].load_objects_from_scene()
         universes = GLOBAL_DATA["UniverseStore"]
-        universes.notify_universe_change(ALL_UNIVERSES)
+        universes.notify_universe_change(ALL_UNIVERSES, [])
 
 def register():
     """Called from Blender"""
@@ -105,7 +105,7 @@ def register():
     # register Light UI Panel
     bpy.utils.register_class(LightArtNetPanel)
 
-    WindowManager.addon_blender_artnet_control_state = EnumProperty(
+    WindowManager.addon_blender_artnet_control_state: EnumProperty = EnumProperty(
         name="ArtNet Control",
         items=[
             ('listen', '', 'Listen to Artnet', 'UNLOCKED', 0),
