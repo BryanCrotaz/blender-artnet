@@ -99,3 +99,9 @@ Please submit a PR if you have an improvement.
 I'm not a professional lighting designer - this came out of a hobby project to control lighting for an event I worked on for a friend. So I have no personal value gained by working on improving it (unlike other open source software I work on), although it is rather fun. If lighting professionals see a value in this plugin I would be happy to be funded to work on it via Patreon.
 
 Alternatively, I would be very happy to accept high quality PRs to improve the plugin.
+
+# Funders
+
+Many thanks to the below companies and individuals who have funded me to work on this addon.
+
+* Skeldon Società Cooperativa, Italy
