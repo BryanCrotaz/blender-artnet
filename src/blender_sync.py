@@ -7,7 +7,7 @@ from .color_converter import ColorConverter
 class BlenderSynchroniser:
     """Writes universe data to Blender"""
 
-    artnet_control_state = 'listen'
+    artnet_enabled = True
     frame_current = 0
 
     def __init__(self, universe_store, fixture_store, fixture_type_store):
@@ -30,19 +30,21 @@ class BlenderSynchroniser:
 
         # only deal with universes that we have fixtures for
         universes_pending = list(
-            filter(lambda x: x in self.fixture_store.fixture_universe_ids, universe_changes_pending.keys())
+            filter(lambda x: x in self.fixture_store.fixture_universe_ids, 
+                   universe_changes_pending.keys())
         )
 
-        control_state = self.artnet_control_state
-        if control_state != 'play':
-            if control_state == 'record':
+        auto_keyframes = bpy.context.scene.tool_settings.use_keyframe_insert_auto
+        if self.artnet_enabled:
+            if auto_keyframes:
                 self.add_keyframes = True
                 self.frame_current = bpy.context.scene.frame_current
             else:
                 self.add_keyframes = False
 
             for universe_index in universes_pending:
-                self._update_blender_from_universe(universe_index, universe_changes_pending[universe_index])
+                self._update_blender_from_universe(universe_index,
+                                                   universe_changes_pending[universe_index])
 
         return 0.03 # call again in 0.05 seconds - 30fps
 
@@ -118,7 +120,7 @@ class BlenderSynchroniser:
                 if self.add_keyframes:
                     obj.data.keyframe_insert(data_path="energy",
                                              frame=self.frame_current)
-                                             
+
             self._set_rotation(obj, universe, base_address, fixture_type, channels)
 
     def update_point_light(self, obj, mapping, universe, raw_universe, channels):

@@ -24,7 +24,7 @@ Use with Evee to live-preview your lighting.
 import bpy
 
 from bpy.app.handlers import persistent
-from bpy.types import WindowManager, Light
+from bpy.types import WindowManager, Light, TOPBAR_MT_window
 from bpy.props import BoolProperty, IntProperty, StringProperty, EnumProperty
 
 from .src.artnet_socket import ArtNetSocket
@@ -63,7 +63,7 @@ bl_info = {
     "category": "Lighting",
     "support": "COMMUNITY",
     "author": "Bryan Crotaz",
-    "version": (1, 6, 1),
+    "version": (1, 6, 2),
     "wiki_url": "https://github.com/BryanCrotaz/blender-artnet"
 }
 
@@ -83,7 +83,7 @@ def _setup():
     fixture_store.load_objects_from_scene()
     universes.notify_universe_change(ALL_UNIVERSES, [])
 
-    bpy.types.TIME_MT_editor_menus.append(draw_artnet_property)
+    TOPBAR_MT_window.append(draw_artnet_enabled)
     return None
 
 @persistent
@@ -105,31 +105,23 @@ def register():
     # register Light UI Panel
     bpy.utils.register_class(LightArtNetPanel)
 
-    WindowManager.addon_blender_artnet_control_state: EnumProperty = EnumProperty(
-        name="ArtNet Control",
-        items=[
-            ('listen', '', 'Listen to Artnet', 'UNLOCKED', 0),
-            ('record', '', 'Record keyframes from Artnet', 'REC', 1),
-            ('play', '', 'Ignore Artnet and play keyframes', 'LOCKED', 2)
-        ],
-        description="ArtNet Control State",
-        update=artnet_control_state_update,
-        default='listen'
+    WindowManager.addon_blender_artnet_enabled: BoolProperty = BoolProperty(
+        name="Listen to ArtNet",
+        description="Enable listening to ArtNet",
+        get=get_artnet_enabled,
+        set=set_artnet_enabled
     )
 
-def draw_artnet_property(menu, context):
+def draw_artnet_enabled(menu, context):
     layout = menu.layout
-    # call the property
-    box = layout.row()
-    box.prop(context.window_manager, "addon_blender_artnet_control_state", expand=True)
-    if context.window_manager.addon_blender_artnet_control_state == 'record':
-        box.alert = True
-    else:
-        box.alert = False
-    box.label(text="Artnet")
+    layout.separator()
+    layout.prop(context.window_manager, "addon_blender_artnet_enabled", expand=True)
 
-def artnet_control_state_update(window_manager, context):
-    GLOBAL_DATA.get('BlenderSynchroniser').artnet_control_state = window_manager.addon_blender_artnet_control_state
+def get_artnet_enabled(window_manager):
+    return GLOBAL_DATA.get('BlenderSynchroniser').artnet_enabled
+
+def set_artnet_enabled(window_manager, value):
+    GLOBAL_DATA.get('BlenderSynchroniser').artnet_enabled = value
 
 def register_light_properties():
     Light.artnet_enabled: BoolProperty = BoolProperty(
@@ -204,8 +196,8 @@ def unregister():
         bpy.app.timers.unregister(_setup)
     # unregister ui panel
     bpy.utils.unregister_class(LightArtNetPanel)
-    bpy.types.TIME_MT_editor_menus.remove(draw_artnet_property)
-    del WindowManager.addon_blender_artnet_control_state
+    TOPBAR_MT_window.remove(draw_artnet_enabled)
+    del WindowManager.addon_blender_artnet_enabled
 
     # remove light properties
     del Light.artnet_enabled

@@ -26,17 +26,20 @@ address and fixture type
 
 Add your own named fixture types in `src/fixture_type_store.py`
 
+In the Window menu, the *Listen to ArtNet* checkbox enables or disables Artnet input to Blender. It's on by default.
+
 ## Keyframes
 
-In the timeline header, look for the Artnet buttons (locked, unlocked and record)
-
-* **Unlocked** Responds in real time to Artnet data
-* **Record** Listens to Artnet data and saves it as keyframes
-* **Locked** Ignores Artnet incoming data
+From version 1.6.2 this addon integrates with Blender *Auto Keyframing*. When this is enabled, the addon will append
+keyframes to the timeline for all properties modified via Artnet.
 
 ![Editing in Blender](./images/Blender-artnet.png)
 
 # Support
+
+## Version 1.6.2:
+
+* Integrate with Auto Keyframing setting in Blender
 
 ## Version 1.6.1:
 
