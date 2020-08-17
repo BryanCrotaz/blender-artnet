@@ -16,10 +16,12 @@ class BlenderSynchroniser:
         self.fixture_type_store = fixture_type_store
         self.add_keyframes = False
 
-        bpy.app.timers.register(self._update_blender, first_interval=0.1, persistent=True)
+        bpy.app.timers.register(self.timer_tick, first_interval=0.1, persistent=True)
+        bpy.app.handlers.frame_change_pre.append(self.frame_change_pre)
 
     def __del__(self):
-        bpy.app.timers.unregister(self._update_blender)
+        bpy.app.timers.unregister(self.timer_tick)
+        bpy.app.handlers.frame_change_pre.remove(self.frame_change_pre)
 
     def _update_blender(self):
         """main loop"""
@@ -30,23 +32,27 @@ class BlenderSynchroniser:
 
         # only deal with universes that we have fixtures for
         universes_pending = list(
-            filter(lambda x: x in self.fixture_store.fixture_universe_ids, 
+            filter(lambda x: x in self.fixture_store.fixture_universe_ids,
                    universe_changes_pending.keys())
         )
 
-        auto_keyframes = bpy.context.scene.tool_settings.use_keyframe_insert_auto
         if self.artnet_enabled:
-            if auto_keyframes:
-                self.add_keyframes = True
-                self.frame_current = bpy.context.scene.frame_current
-            else:
-                self.add_keyframes = False
-
             for universe_index in universes_pending:
                 self._update_blender_from_universe(universe_index,
                                                    universe_changes_pending[universe_index])
 
-        return 0.03 # call again in 0.05 seconds - 30fps
+    def frame_change_pre(self, scene, context):
+        self.add_keyframes = scene.tool_settings.use_keyframe_insert_auto
+        if self.add_keyframes:
+            self.frame_current = scene.frame_current
+            self._update_blender()
+
+    def timer_tick(self):
+        self.add_keyframes = bpy.context.scene.tool_settings.use_keyframe_insert_auto
+        if not self.add_keyframes:
+            self._update_blender()
+            return 0.03 # call again in 0.03 seconds - 30fps
+        return 0.01 # call again in 0.01 seconds - 10fps
 
     def _update_blender_from_universe(self, index, channels):
         fixtures = self.fixture_store.get_fixtures_for_universe(index)
