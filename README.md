@@ -37,6 +37,11 @@ keyframes to the timeline for all properties modified via Artnet.
 
 # Support
 
+## Version 1.6.3:
+
+* Follow Blender's internal frame rate when recording auto keyframes, matching your animation framerate
+* When not recording keyframes, run at 30fps for smooth previs
+
 ## Version 1.6.2:
 
 * Integrate with Auto Keyframing setting in Blender
