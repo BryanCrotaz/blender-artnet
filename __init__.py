@@ -63,7 +63,7 @@ bl_info = {
     "category": "Lighting",
     "support": "COMMUNITY",
     "author": "Bryan Crotaz",
-    "version": (1, 6, 2),
+    "version": (1, 6, 3),
     "wiki_url": "https://github.com/BryanCrotaz/blender-artnet"
 }
 
