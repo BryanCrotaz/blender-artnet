@@ -4,6 +4,10 @@ import bpy
 
 from .color_converter import ColorConverter
 
+from timeit import default_timer as stopwatch
+from bpy.app.handlers import persistent
+
+
 class BlenderSynchroniser:
     """Writes universe data to Blender"""
 
@@ -17,14 +21,24 @@ class BlenderSynchroniser:
         self.add_keyframes = False
 
         bpy.app.timers.register(self.timer_tick, first_interval=0.1, persistent=True)
-        bpy.app.handlers.frame_change_pre.append(self.frame_change_pre)
+        self.is_initialised = True
 
     def __del__(self):
-        bpy.app.timers.unregister(self.timer_tick)
-        bpy.app.handlers.frame_change_pre.remove(self.frame_change_pre)
+        self.shutdown()
+
+    def shutdown(self):
+        if self.is_initialised:
+            self.is_initialised = False
+            # if bpy.app.timers.is_registered(self.timer_tick) doesn't like class methods
+            #     bpy.app.timers.unregister(self.timer_tick)
+    #        bpy.app.handlers.frame_change_pre.remove(self.frame_change_pre)
+
+    def register(self):
+        bpy.app.handlers.frame_change_pre.append(self.frame_change_pre)
 
     def _update_blender(self):
         """main loop"""
+        start = stopwatch()
         # runs in the main thread on a timer
         # find out which universes updated
         # returns map of universe index to list of changed channels
@@ -42,6 +56,10 @@ class BlenderSynchroniser:
                 self._update_blender_from_universe(universe_index,
                                                    universe_changes_pending[universe_index])
             bpy.types.RenderSettings.use_lock_interface = False
+        end = stopwatch()
+        ms = (end - start) * 1000
+        if ms > 1:
+            print('{:.2f}'.format(ms))
 
     def frame_change_pre(self, scene, context):
         self.add_keyframes = scene.tool_settings.use_keyframe_insert_auto
@@ -50,6 +68,8 @@ class BlenderSynchroniser:
             self._update_blender()
 
     def timer_tick(self):
+        if not self.is_initialised:
+            return None # stop
         self.add_keyframes = bpy.context.scene.tool_settings.use_keyframe_insert_auto
         if not self.add_keyframes:
             self._update_blender()

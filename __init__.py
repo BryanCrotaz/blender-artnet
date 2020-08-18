@@ -90,8 +90,12 @@ def _setup():
 def _on_file_loaded(_, __):
     if "FixtureStore" in GLOBAL_DATA:
         GLOBAL_DATA["FixtureStore"].load_objects_from_scene()
+    if "UniverseStore" in GLOBAL_DATA:
         universes = GLOBAL_DATA["UniverseStore"]
         universes.notify_universe_change(ALL_UNIVERSES, [])
+    if "BlenderSynchroniser" in GLOBAL_DATA:
+        synchroniser = GLOBAL_DATA["BlenderSynchroniser"]
+        synchroniser.register()
 
 def register():
     """Called from Blender"""
@@ -194,6 +198,24 @@ def unregister():
         GLOBAL_DATA["ArtNetSocket"].shutdown()
     if bpy.app.timers.is_registered(_setup):
         bpy.app.timers.unregister(_setup)
+
+    old = GLOBAL_DATA.get("FixtureStore", None)
+    if old is not None:
+        del GLOBAL_DATA["FixtureStore"]
+        del old
+    old = GLOBAL_DATA.get("UniverseStore", None)
+    if old is not None:
+        del GLOBAL_DATA["UniverseStore"]
+        del old
+    old = GLOBAL_DATA.get("ArtNetSocket", None)
+    if old is not None:
+        del GLOBAL_DATA["ArtNetSocket"]
+        del old
+    old = GLOBAL_DATA.get("BlenderSynchroniser", None)
+    if old is not None:
+        old.shutdown()
+        del GLOBAL_DATA["BlenderSynchroniser"]
+        del old
     # unregister ui panel
     bpy.utils.unregister_class(LightArtNetPanel)
     TOPBAR_MT_window.remove(draw_artnet_enabled)
