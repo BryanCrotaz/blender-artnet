@@ -37,9 +37,11 @@ class BlenderSynchroniser:
         )
 
         if self.artnet_enabled:
+            bpy.types.RenderSettings.use_lock_interface = True
             for universe_index in universes_pending:
                 self._update_blender_from_universe(universe_index,
                                                    universe_changes_pending[universe_index])
+            bpy.types.RenderSettings.use_lock_interface = False
 
     def frame_change_pre(self, scene, context):
         self.add_keyframes = scene.tool_settings.use_keyframe_insert_auto
@@ -81,116 +83,129 @@ class BlenderSynchroniser:
             self.fixture_store.remove_object_by_name(name)
 
     def update_spot_light(self, obj, mapping, universe, raw_universe, channels):
-        fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
-        if fixture_type is not None:
-            base_address = mapping["base_address"]
-            # push the data
-            color = self._get_color(universe, raw_universe, base_address, fixture_type, channels)
-            if color is not None:
-                obj.data.color = color
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="color",
-                                             frame=self.frame_current)
+        fixture_type = self.fixture_type_store.get_fixture_type(mapping.get("fixture_type", None))
+        if fixture_type is None:
+            return
+        base_address = mapping.get("base_address", None)
+        # push the data
+        color = self._get_color(universe, raw_universe, base_address, fixture_type, channels)
+        if color is not None:
+            obj.data.color = color
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="color",
+                                         frame=self.frame_current)
 
-            energy = self._get_power(universe, base_address, fixture_type, channels)
-            if energy is not None:
-                obj.data.energy = energy
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="energy",
-                                            frame=self.frame_current)
+        energy = self._get_power(universe, base_address, fixture_type, channels)
+        if energy is not None:
+            obj.data.energy = energy
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="energy",
+                                         frame=self.frame_current)
 
-            self._set_rotation(obj, universe, base_address, fixture_type, channels)
+        self._set_rotation(obj, universe, base_address, fixture_type, channels)
 
-            zoom = self._get_zoom(universe, base_address, fixture_type, channels)
-            if  zoom is not None:
-                obj.data.spot_size = zoom
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="spot_size",
-                                             frame=self.frame_current)
+        zoom = self._get_zoom(universe, base_address, fixture_type, channels)
+        if  zoom is not None:
+            obj.data.spot_size = zoom
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="spot_size",
+                                         frame=self.frame_current)
 
     def update_area_light(self, obj, mapping, universe, raw_universe, channels):
-        fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
-        if fixture_type is not None:
-            base_address = mapping["base_address"]
-            # push the data
-            color = self._get_color(universe, raw_universe, base_address, fixture_type, channels)
-            if color is not None:
-                obj.data.color = color
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="color",
-                                            frame=self.frame_current)
+        fixture_type = self.fixture_type_store.get_fixture_type(mapping.get("fixture_type", None))
+        if fixture_type is None:
+            return None
 
-            energy = self._get_power(universe, base_address, fixture_type, channels)
-            if energy is not None:
-                obj.data.energy = energy
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="energy",
-                                             frame=self.frame_current)
+        base_address = mapping.get("base_address", None)
+        if base_address is None:
+            return None
 
-            self._set_rotation(obj, universe, base_address, fixture_type, channels)
+        # push the data
+        color = self._get_color(universe, raw_universe, base_address, fixture_type, channels)
+        if color is not None:
+            obj.data.color = color
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="color",
+                                         frame=self.frame_current)
+
+        energy = self._get_power(universe, base_address, fixture_type, channels)
+        if energy is not None:
+            obj.data.energy = energy
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="energy",
+                                         frame=self.frame_current)
+
+        self._set_rotation(obj, universe, base_address, fixture_type, channels)
 
     def update_point_light(self, obj, mapping, universe, raw_universe, channels):
-        fixture_type = self.fixture_type_store.get_fixture_type(mapping["fixture_type"])
-        if fixture_type is not None:
-            base_address = mapping["base_address"]
-            # push the data
-            color = self._get_color(universe, raw_universe, base_address, fixture_type, channels)
-            if color is not None:
-                obj.data.color = color
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="color",
-                                             frame=self.frame_current)
+        fixture_type = self.fixture_type_store.get_fixture_type(mapping.get("fixture_type", None))
+        if fixture_type is None:
+            return None
+        base_address = mapping.get("base_address", None)
+        # push the data
+        color = self._get_color(universe, raw_universe, base_address, fixture_type, channels)
+        if color is not None:
+            obj.data.color = color
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="color",
+                                         frame=self.frame_current)
 
-            energy = self._get_power(universe, base_address, fixture_type, channels)
-            if energy is not None:
-                obj.data.energy = energy
-                if self.add_keyframes:
-                    obj.data.keyframe_insert(data_path="energy",
-                                             frame=self.frame_current)
+        energy = self._get_power(universe, base_address, fixture_type, channels)
+        if energy is not None:
+            obj.data.energy = energy
+            if self.add_keyframes:
+                obj.data.keyframe_insert(data_path="energy",
+                                         frame=self.frame_current)
 
     def _get_zoom(self, universe, base_address, fixture_type, channels):
-        # todo remove this try block for speed
-        try:
-            zoom_channel = base_address + fixture_type["zoom"]
-            if zoom_channel in channels:
-                min_zoom = fixture_type["minZoom"]
-                max_zoom = fixture_type["maxZoom"]
-                zoom = universe[zoom_channel]
-                if "zoom_invert" in fixture_type and fixture_type["zoom_invert"]:
-                    zoom = 1 - zoom
-                angle = min_zoom + zoom *(max_zoom-min_zoom)
-                return angle
+        zoom_channel = fixture_type.get("zoom", None)
+        if zoom_channel is None:
             return None
-        except IndexError:
-            return None
+        zoom_channel += base_address
+        if zoom_channel in channels:
+            min_zoom = fixture_type.get("minZoom", 0)
+            max_zoom = fixture_type.get("maxZoom", 90)
+            zoom = universe[zoom_channel]
+            zoom_invert = fixture_type.get("zoom_invert", False)
+            if zoom_invert:
+                zoom = 1 - zoom
+            angle = min_zoom + zoom *(max_zoom-min_zoom)
+            return angle
+        return None
 
     def _get_power(self, universe, base_address, fixture_type, channels):
-        # todo remove this try block for speed
-        try:
-            dimmer_channel = base_address + fixture_type["dimmer"]
-            if dimmer_channel in channels:
-                dimmer = universe[dimmer_channel]
-                lumens = fixture_type["lumens"]
-                power = lumens * dimmer / 6.83
-                return power
+        dimmer_channel = fixture_type.get("dimmer", None)
+        if dimmer_channel is None:
             return None
-        except IndexError:
-            return None
+        dimmer_channel += base_address
+        if dimmer_channel in channels:
+            dimmer = universe[dimmer_channel]
+            lumens = fixture_type["lumens"]
+            power = lumens * dimmer / 6.83
+            return power
+        return None
 
     def _get_rotation(self, universe, base_address, fixture_type, channels):
         pan = None
         tilt = None
-        if base_address + fixture_type["pan"] in channels:
-            pan = universe[base_address + fixture_type["pan"]]
-            pan_range = fixture_type["panRange"]
-            pan -= 0.5
-            pan *= pan_range
+        universe_len = len(universe)
+        pan_channel = fixture_type.get("pan", None)
+        if pan_channel is not None:
+            pan_channel += base_address
+            if pan_channel in channels:
+                pan = universe[pan_channel] if (pan_channel < universe_len) else 0
+                pan_range = fixture_type.get("panRange", 360)
+                pan -= 0.5
+                pan *= pan_range
 
-        if base_address + fixture_type["tilt"] in channels:
-            tilt = universe[base_address + fixture_type["tilt"]]
-            tilt_range = fixture_type["tiltRange"]
-            tilt -= 0.5
-            tilt *= tilt_range
+        tilt_channel = fixture_type.get("tilt", None)
+        if tilt_channel is not None:
+            tilt_channel += base_address
+            if tilt_channel in channels:
+                tilt = universe[tilt_channel] if (tilt_channel < universe_len) else 0
+                tilt_range = fixture_type.get("tiltRange", 360)
+                tilt -= 0.5
+                tilt *= tilt_range
         return [pan, tilt]
 
     def _set_rotation(self, obj, universe, base_address, fixture_type, channels):
@@ -202,12 +217,7 @@ class BlenderSynchroniser:
             self.set_rotation_on_target(obj, obj.data.artnet_old_tilt_target, 0)
             obj.data.artnet_old_tilt_target = "none"
 
-        # todo remove this try block for speed
-        try:
-            rotation = self._get_rotation(universe, base_address, fixture_type, channels)
-        except IndexError:
-            print('_set_rotation error')
-            return None # null movement, because no data yet
+        rotation = self._get_rotation(universe, base_address, fixture_type, channels)
         pan = rotation[0]
         tilt = rotation[1]
         if pan is not None:
@@ -262,42 +272,65 @@ class BlenderSynchroniser:
                                       index = kf_index)
 
     def _get_color(self, universe, rawUniverse, base_address, fixture_type, channels):
-        color_mode = fixture_type["colorMode"]
-        # todo remove this try block for speed
-        try:
-            if color_mode == "rgbw":
-                red_channel = base_address + fixture_type["red"]
-                green_channel = base_address + fixture_type["green"]
-                blue_channel = base_address + fixture_type["blue"]
-                white_channel = base_address + fixture_type["white"]
-                if (red_channel in channels or green_channel in channels or blue_channel in channels or white_channel in channels):
-                    red = universe[red_channel]
-                    green = universe[green_channel]
-                    blue = universe[blue_channel]
-                    white = universe[white_channel]
-                    return ColorConverter.rgbw_to_rgb(red, green, blue, white)
-                else:
-                    return None
-            elif color_mode == "cmy":
-                cyan_channel = base_address + fixture_type["cyan"]
-                magenta_channel = base_address + fixture_type["magenta"]
-                yellow_channel = base_address + fixture_type["yellow"]
-                if (cyan_channel in channels or magenta_channel in channels or yellow_channel in channels):
-                    cyan = universe[cyan_channel]
-                    magenta = universe[magenta_channel]
-                    yellow = universe[yellow_channel]
-                    return ColorConverter.cmy_to_rgb(cyan, magenta, yellow)
-                else:
-                    return None
-            elif color_mode == "wheel":
-                position_channel = base_address + fixture_type["color"]
-                if (position_channel in channels):
-                    position = rawUniverse[position_channel]
-                    wheel = fixture_type["colorWheel"]
-                    return ColorConverter.wheel_to_rgb(wheel, position, True)
-                else:
-                    return None
-            else:
-                return [1, 1, 1] # white
-        except IndexError:
+        color_mode = fixture_type.get("colorMode", None)
+        if color_mode == "rgbw":
+            red_channel = fixture_type.get("red", None)
+            green_channel = fixture_type.get("green", None)
+            blue_channel = fixture_type.get("blue", None)
+            white_channel = fixture_type.get("white", None)
+            if (red_channel is None
+                    or green_channel is None
+                    or blue_channel is None
+                    or white_channel is None):
+                return None
+            red_channel += base_address
+            green_channel += base_address
+            blue_channel += base_address
+            white_channel += base_address
+            if (red_channel in channels
+                    or green_channel in channels
+                    or blue_channel in channels
+                    or white_channel in channels):
+                universe_len = len(universe)
+                red = universe[red_channel] if (red_channel < universe_len) else 0
+                green = universe[green_channel] if (green_channel < universe_len) else 0
+                blue = universe[blue_channel] if (blue_channel < universe_len) else 0
+                white = universe[white_channel] if (white_channel < universe_len) else 0
+                return ColorConverter.rgbw_to_rgb(red, green, blue, white)
+            return None
+
+        elif color_mode == "cmy":
+            cyan_channel = fixture_type.get("cyan", None)
+            magenta_channel = fixture_type.get("magenta", None)
+            yellow_channel = fixture_type.get("yellow", None)
+            if (cyan_channel is None
+                    or magenta_channel is None
+                    or yellow_channel is None):
+                return None
+            cyan_channel += base_address
+            magenta_channel += base_address
+            yellow_channel += base_address
+            if (cyan_channel in channels
+                    or magenta_channel in channels
+                    or yellow_channel in channels):
+                universe_len = len(universe)
+                cyan = universe[cyan_channel] if (cyan_channel < universe_len) else 0
+                magenta = universe[magenta_channel] if (magenta_channel < universe_len) else 0
+                yellow = universe[yellow_channel] if (yellow_channel < universe_len) else 0
+                return ColorConverter.cmy_to_rgb(cyan, magenta, yellow)
+            return None
+
+        elif color_mode == "wheel":
+            position_channel = fixture_type.get("color", None)
+            if position_channel is None:
+                return None
+            position_channel += base_address
+            if position_channel in channels:
+                universe_len = len(universe)
+                position = rawUniverse[position_channel] if (position_channel < universe_len) else 0
+                wheel = fixture_type["colorWheel"]
+                return ColorConverter.wheel_to_rgb(wheel, position, True)
+            return None
+
+        else:
             return None

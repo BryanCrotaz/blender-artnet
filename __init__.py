@@ -217,6 +217,6 @@ def _light_data_change(data, context):
     # apply the DMX data to get it up to date
     universes = GLOBAL_DATA["UniverseStore"]
     if old_universe is not None:
-        universes.notify_universe_change(old_universe)
+        universes.notify_universe_change(old_universe, range(0, 511))
     if data.artnet_enabled:
-        universes.notify_universe_change(data.artnet_universe)
+        universes.notify_universe_change(data.artnet_universe, range(0, 511))
