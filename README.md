@@ -72,34 +72,34 @@ Frost can be handled by changing the spot blend radius in Blender
 Gobos can be handled by [https://www.youtube.com/watch?v=Af-yLsRpF7I]
 
 # Versions
-### Version 1.6.3:
+#### Version 1.6.3:
 
 * Follow Blender's internal frame rate when recording auto keyframes, matching your animation framerate
 * When not recording keyframes, run at 30fps for smooth previs
 
-### Version 1.6.2:
+#### Version 1.6.2:
 
 * Integrate with Auto Keyframing setting in Blender
 
-### Version 1.6.1:
+#### Version 1.6.1:
 
 * Only create key frames for channels that changed
 
-### Version 1.6:
+#### Version 1.6:
 
 * Save ArtNet animation to keyframes for playback later, e.g. rendering in Cycles
 * Supports Point light type in Blender
 
-### Version 1.5:
+#### Version 1.5:
 
 * Target parent or grandparent object with pan and tilt settings - great for moving head modelling
 
-### Version 1.3:
+#### Version 1.3:
 
 * Supports Area light type in Blender
 * Hides artnet panel for unsupported lights
 
-### Version 1.2:
+#### Version 1.2:
 
 * Supports Spot light type in Blender
 
