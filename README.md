@@ -5,13 +5,13 @@ Combine with QLCPlus to have a fully open source lighting system
 
 # Install
 
-Clone this repo and remember the folder where you put it
+In the `Code...` menu download this repo as a zip file and remember the folder where you put it
 
 1. Install Blender 2.8 or higher.
 2. `Edit | Preferences` menu opens the preferences dialog
 3. Select the `Add-ons` tab
 4. Press the `Install...` button
-5. Select the `__init__.py` file in the folder you cloned into
+5. Select the zip file you downloaded
 6. Press the `Install Addon` button
 7. Close the preferences dialog
 8. ...
