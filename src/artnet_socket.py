@@ -25,8 +25,8 @@ class ArtNetSocket:
         """Connect to Artnet UDP socket"""
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-            self._socket.bind((UDP_IP, UDP_PORT))
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self._socket.bind((UDP_IP, UDP_PORT))
             # blocking socket as we're listening in a background thread
             self._socket.setblocking(1)
             self._socket.settimeout(1) # 1 second timeout
