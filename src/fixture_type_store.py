@@ -9,10 +9,14 @@ class FixtureTypeStore:
         for fixture_type in self._fixture_types:
             f_t = self._fixture_types[fixture_type]
             # convert degrees to radians so we don't do this every frame
-            f_t["panRange"] = math.radians(f_t["panRange"])
-            f_t["tiltRange"] = math.radians(f_t["tiltRange"])
-            f_t["minZoom"] = math.radians(f_t["minZoom"])
-            f_t["maxZoom"] = math.radians(f_t["maxZoom"])
+           if "panRange" in f_t:
+                f_t["panRange"] = math.radians(f_t["panRange"])
+            if "tiltRange" in f_t:
+                f_t["tiltRange"] = math.radians(f_t["tiltRange"])
+            if "minZoom" in f_t:
+                f_t["minZoom"] = math.radians(f_t["minZoom"])
+            if "maxZoom" in f_t:
+                f_t["maxZoom"] = math.radians(f_t["maxZoom"])
 
     # TODO: load these from a public store or provide a UI to edit them
     _fixture_types = {
